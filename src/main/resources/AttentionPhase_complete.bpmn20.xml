@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:flowable="http://flowable.org/bpmn" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/test">
+  <process id="nettunitProcess_attentionPhase" name="My process" isExecutable="true">
+    <startEvent id="startevent1" name="Incident Declared"></startEvent>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="notify_gestionnaire"></sequenceFlow>
+    <serviceTask id="notify_gestionnaire" name="Notifier gestionnaire" flowable:class="nettunit.handler.NotifierGestionnaireHandler">
+    <extensionElements>
+            <flowable:executionListener event="start" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
+            <flowable:executionListener event="end" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
+          </extensionElements>
+    </serviceTask>
+    <userTask id="gestionnaire_confirm_receive_notification" name="Recevoir notification incident"
+              flowable:candidateGroups="gestionnaire"></userTask>
+    <sequenceFlow id="flow2" sourceRef="notify_gestionnaire" targetRef="gestionnaire_confirm_receive_notification"></sequenceFlow>
+    <userTask id="activate_plan_intern" name="Activer Plan securité interne" flowable:candidateGroups="gestionnaire"></userTask>
+    <sequenceFlow id="flow3" sourceRef="gestionnaire_confirm_receive_notification" targetRef="activate_plan_intern"></sequenceFlow>
+    <userTask id="determine_scenario" name="Determiner scenario parmi ceux du repertoire" flowable:candidateGroups="gestionnaire"></userTask>
+    <sequenceFlow id="flow4" sourceRef="activate_plan_intern" targetRef="determine_scenario"></sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="determine_scenario" targetRef="gestionnaire_inform_orgs"></sequenceFlow>
+    <parallelGateway id="parallelgateway1" name="Parallel Gateway"></parallelGateway>
+    <sequenceFlow id="flow6" sourceRef="gestionnaire_inform_orgs" targetRef="parallelgateway1"></sequenceFlow>
+    <sequenceFlow id="flow7" sourceRef="parallelgateway1" targetRef="monitor_incident_task"></sequenceFlow>
+    <userTask id="receive_evaluation_prefect" name="Receivoir Evaluation (dirigéant préfecture)" flowable:candidateGroups="prefecture"></userTask>
+    <userTask id="receive_evaluation_vvf" name="Receivoir Evaluation (commandement pompiers)" flowable:candidateGroups="pompiers"></userTask>
+    <sequenceFlow id="flow8" sourceRef="parallelgateway1" targetRef="receive_evaluation_prefect"></sequenceFlow>
+    <sequenceFlow id="flow9" sourceRef="parallelgateway1" targetRef="receive_evaluation_vvf"></sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="receive_evaluation_prefect" targetRef="prefect_inform_orgs"></sequenceFlow>
+    <userTask id="send_rescue_team" name="Envoyer une équipe de terrain pour évaluation" flowable:candidateGroups="pompiers"></userTask>
+    <sequenceFlow id="flow11" sourceRef="receive_evaluation_vvf" targetRef="send_rescue_team"></sequenceFlow>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <endEvent id="endevent2" name="End"></endEvent>
+    <exclusiveGateway id="incident_solved_gateway" name="Incident solved"></exclusiveGateway>
+    <endEvent id="endevent3" name="End"></endEvent>
+    <sequenceFlow id="flow12" sourceRef="prefect_inform_orgs" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="send_rescue_team" targetRef="endevent2"></sequenceFlow>
+    <sequenceFlow id="flow14" sourceRef="monitor_incident_task" targetRef="incident_solved_gateway"></sequenceFlow>
+    <sequenceFlow id="yes_incident_solved" name="Oui" sourceRef="incident_solved_gateway" targetRef="endevent3">
+    <conditionExpression xsi:type="tFormalExpression">
+                    <![CDATA[
+              ${incidentSolved}
+            ]]>
+                </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="no_incident_solved" name="Non" sourceRef="incident_solved_gateway" targetRef="monitor_incident_task">
+    <conditionExpression xsi:type="tFormalExpression">
+                        <![CDATA[
+                  ${!incidentSolved}
+                ]]>
+                    </conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="gestionnaire_inform_orgs" name="Informer les org. techniques et de secours" flowable:class="nettunit.handler.GestionnaireInformOrganizations"></serviceTask>
+    <serviceTask id="prefect_inform_orgs" name="Informer les org. techniques et de secours" flowable:class="nettunit.handler.PrefectInformOrganizations">
+      <extensionElements>
+        <flowable:executionListener event="start" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
+      </extensionElements>
+    </serviceTask>
+    <boundaryEvent id="boundaryerror1" name="Error" attachedToRef="notify_gestionnaire">
+      <errorEventDefinition errorRef="REQUIRE_ORCHESTRATION"></errorEventDefinition>
+    </boundaryEvent>
+    <boundaryEvent id="boundaryerror2" name="Error" attachedToRef="gestionnaire_inform_orgs">
+      <errorEventDefinition errorRef="REQUIRE_ORCHESTRATION"></errorEventDefinition>
+    </boundaryEvent>
+    <boundaryEvent id="boundaryerror3" name="Error" attachedToRef="prefect_inform_orgs">
+      <errorEventDefinition errorRef="REQUIRE_ORCHESTRATION"></errorEventDefinition>
+    </boundaryEvent>
+    <serviceTask id="reorganize_plan" name="Reorganizer Plan d'urgence" flowable:class="nettunit.handler.MUSAOrchestrationHandler"></serviceTask>
+    <sequenceFlow id="flow15" sourceRef="boundaryerror2" targetRef="reorganize_plan"></sequenceFlow>
+    <sequenceFlow id="flow16" sourceRef="boundaryerror3" targetRef="reorganize_plan"></sequenceFlow>
+    <sequenceFlow id="flow17" sourceRef="boundaryerror1" targetRef="reorganize_plan"></sequenceFlow>
+    <endEvent id="endevent4" name="End"></endEvent>
+    <sequenceFlow id="flow18" sourceRef="reorganize_plan" targetRef="endevent4"></sequenceFlow>
+    <serviceTask id="monitor_incident_task" name="Monitorer l'incident" flowable:class="nettunit.handler.MonitorIncidentHandler"></serviceTask>
+    <textAnnotation id="textannotation1">
+      <text>Incident résolu?</text>
+    </textAnnotation>
+    <association id="association1" sourceRef="incident_solved_gateway" targetRef="textannotation1" associationDirection="None"></association>
+    <textAnnotation id="textannotation2">
+      <text>urgence declarée
+</text>
+    </textAnnotation>
+    <association id="association2" sourceRef="textannotation2" targetRef="startevent1" associationDirection="None"></association>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_attention_phase">
+    <bpmndi:BPMNPlane bpmnElement="attention_phase" id="BPMNPlane_attention_phase">
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="155.0" y="110.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="notify_gestionnaire" id="BPMNShape_notify_gestionnaire">
+        <omgdc:Bounds height="55.0" width="105.0" x="120.0" y="180.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundaryerror1" id="BPMNShape_boundaryerror1">
+        <omgdc:Bounds height="30.0" width="30.0" x="210.0" y="170.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gestionnaire_confirm_receive_notification" id="BPMNShape_gestionnaire_confirm_receive_notification">
+        <omgdc:Bounds height="55.0" width="125.0" x="110.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="activate_plan_intern" id="BPMNShape_activate_plan_intern">
+        <omgdc:Bounds height="55.0" width="115.0" x="260.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="determine_scenario" id="BPMNShape_determine_scenario">
+        <omgdc:Bounds height="55.0" width="141.0" x="410.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="parallelgateway1" id="BPMNShape_parallelgateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="780.0" y="307.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="receive_evaluation_prefect" id="BPMNShape_receive_evaluation_prefect">
+        <omgdc:Bounds height="61.0" width="157.0" x="389.0" y="440.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="receive_evaluation_vvf" id="BPMNShape_receive_evaluation_vvf">
+        <omgdc:Bounds height="55.0" width="165.0" x="380.0" y="540.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="send_rescue_team" id="BPMNShape_send_rescue_team">
+        <omgdc:Bounds height="55.0" width="142.0" x="590.0" y="540.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="787.0" y="454.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="787.0" y="550.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="incident_solved_gateway" id="BPMNShape_incident_solved_gateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1019.0" y="307.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent3" id="BPMNShape_endevent3">
+        <omgdc:Bounds height="35.0" width="35.0" x="1120.0" y="310.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gestionnaire_inform_orgs" id="BPMNShape_gestionnaire_inform_orgs">
+        <omgdc:Bounds height="55.0" width="151.0" x="580.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundaryerror2" id="BPMNShape_boundaryerror2">
+        <omgdc:Bounds height="30.0" width="30.0" x="707.0" y="290.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="prefect_inform_orgs" id="BPMNShape_prefect_inform_orgs">
+        <omgdc:Bounds height="58.0" width="170.0" x="591.0" y="443.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundaryerror3" id="BPMNShape_boundaryerror3">
+        <omgdc:Bounds height="30.0" width="30.0" x="719.0" y="425.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="reorganize_plan" id="BPMNShape_reorganize_plan">
+        <omgdc:Bounds height="55.0" width="114.0" x="665.0" y="157.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent4" id="BPMNShape_endevent4">
+        <omgdc:Bounds height="35.0" width="35.0" x="704.0" y="90.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="monitor_incident_task" id="BPMNShape_monitor_incident_task">
+        <omgdc:Bounds height="55.0" width="105.0" x="870.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation1" id="BPMNShape_textannotation1">
+        <omgdc:Bounds height="50.0" width="100.0" x="1060.0" y="394.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation2" id="BPMNShape_textannotation2">
+        <omgdc:Bounds height="50.0" width="100.0" x="241.0" y="50.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="172.0" y="145.0"></omgdi:waypoint>
+        <omgdi:waypoint x="172.0" y="180.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="172.0" y="235.0"></omgdi:waypoint>
+        <omgdi:waypoint x="172.0" y="300.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="235.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="375.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="410.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="551.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="580.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="731.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="780.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="820.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="870.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="800.0" y="347.0"></omgdi:waypoint>
+        <omgdi:waypoint x="799.0" y="414.0"></omgdi:waypoint>
+        <omgdi:waypoint x="334.0" y="414.0"></omgdi:waypoint>
+        <omgdi:waypoint x="334.0" y="471.0"></omgdi:waypoint>
+        <omgdi:waypoint x="389.0" y="470.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="800.0" y="347.0"></omgdi:waypoint>
+        <omgdi:waypoint x="799.0" y="411.0"></omgdi:waypoint>
+        <omgdi:waypoint x="330.0" y="411.0"></omgdi:waypoint>
+        <omgdi:waypoint x="330.0" y="568.0"></omgdi:waypoint>
+        <omgdi:waypoint x="380.0" y="567.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="546.0" y="470.0"></omgdi:waypoint>
+        <omgdi:waypoint x="591.0" y="472.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="545.0" y="567.0"></omgdi:waypoint>
+        <omgdi:waypoint x="590.0" y="567.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="761.0" y="472.0"></omgdi:waypoint>
+        <omgdi:waypoint x="787.0" y="471.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="732.0" y="567.0"></omgdi:waypoint>
+        <omgdi:waypoint x="787.0" y="567.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+        <omgdi:waypoint x="975.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1019.0" y="327.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="yes_incident_solved" id="BPMNEdge_yes_incident_solved">
+        <omgdi:waypoint x="1059.0" y="327.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1120.0" y="327.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="1069.0" y="327.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="no_incident_solved" id="BPMNEdge_no_incident_solved">
+        <omgdi:waypoint x="1039.0" y="307.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1039.0" y="250.0"></omgdi:waypoint>
+        <omgdi:waypoint x="922.0" y="250.0"></omgdi:waypoint>
+        <omgdi:waypoint x="922.0" y="300.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="961.0" y="237.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="722.0" y="290.0"></omgdi:waypoint>
+        <omgdi:waypoint x="722.0" y="212.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
+        <omgdi:waypoint x="749.0" y="440.0"></omgdi:waypoint>
+        <omgdi:waypoint x="826.0" y="439.0"></omgdi:waypoint>
+        <omgdi:waypoint x="826.0" y="185.0"></omgdi:waypoint>
+        <omgdi:waypoint x="779.0" y="184.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+        <omgdi:waypoint x="240.0" y="185.0"></omgdi:waypoint>
+        <omgdi:waypoint x="665.0" y="184.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
+        <omgdi:waypoint x="722.0" y="157.0"></omgdi:waypoint>
+        <omgdi:waypoint x="721.0" y="125.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="association1" id="BPMNEdge_association1">
+        <omgdi:waypoint x="1039.0" y="347.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1039.0" y="419.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1060.0" y="419.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="association2" id="BPMNEdge_association2">
+        <omgdi:waypoint x="241.0" y="75.0"></omgdi:waypoint>
+        <omgdi:waypoint x="209.0" y="85.0"></omgdi:waypoint>
+        <omgdi:waypoint x="172.0" y="110.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
