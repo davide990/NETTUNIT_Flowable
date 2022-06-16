@@ -16,6 +16,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>musajixelinterface</groupId>
+            <artifactId>musajixelinterface_2.13</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>2.7.0</version>

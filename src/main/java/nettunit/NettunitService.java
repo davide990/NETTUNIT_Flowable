@@ -2,10 +2,7 @@ package nettunit;
 
 import RabbitMQ.Consumer.JixelRabbitMQConsumer;
 import RabbitMQ.JixelEvent;
-import RabbitMQ.JixelEventUpdate;
-import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Producer.MUSARabbitMQProducer;
-import RabbitMQ.Recipient;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,9 +10,8 @@ import nettunit.dto.InterventionRequest;
 import nettunit.dto.ProcessInstanceResponse;
 import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
-import nettunit.persistence.PendingMessage;
-import nettunit.persistence.PendingMessageRepository;
-import nettunit.persistence.PendingMessagesService;
+import nettunit.rabbitMQ.PendingMessageComponentListener;
+import nettunit.rabbitMQ.JixelRabbitMQConsumerService;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
@@ -28,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import scala.Some;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,47 +53,60 @@ public class NettunitService {
 
 
     @Autowired
-    private PendingMessagesService pendingMessagesService;
+    private JixelRabbitMQConsumerService pendingMessagesService;
 
-    {
-        Thread t1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                consumer.init();
-                consumer.startConsumerAndAwait(100, new Some<>(new JixelConsumerListener() {
-                    @Override
-                    public void onReceiveJixelEvent(JixelEvent event) {
-                        completeTask(event);
-                        //TODO verify task name.
-                    }
+    /*
+        {
+            Thread t1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    consumer.init();
+                    consumer.startConsumerAndAwait(100, new Some<>(new JixelConsumerListener() {
+                        @Override
+                        public void onReceiveJixelEvent(JixelEvent event) {
+                            completeTask(event);
+                            //TODO verify task name.
+                        }
 
-                    @Override
-                    public void onAddRecipient(Recipient r) {
-                        completeTask(r);
-                    }
+                        @Override
+                        public void onAddRecipient(Recipient r) {
+                            completeTask(r);
+                        }
 
-                    @Override
-                    public void onReceiveJixelEventUpdate(JixelEventUpdate update) {
-                        completeTask(update);
-                    }
-                }));
-            }
-
-            private void completeTask(Object obj) {
-                String pendingTaskID = pendingMessagesService.getTaskID(obj);
-                if(!pendingTaskID.isEmpty()){
-                    pendingMessagesService.remove(obj);
-                    taskService.complete(pendingTaskID);
-                    System.out.println("ACK");
+                        @Override
+                        public void onReceiveJixelEventUpdate(JixelEventUpdate update) {
+                            completeTask(update);
+                        }
+                    }));
                 }
+
+                private void completeTask(Object obj) {
+                    String pendingTaskID = pendingMessagesService.getTaskID(obj);
+                    if(!pendingTaskID.isEmpty()){
+                        pendingMessagesService.remove(obj);
+                        taskService.complete(pendingTaskID);
+                        System.out.println("ACK");
+                    }
+                }
+            });
+            t1.start();
+
+
+        }
+    */
+    private static Logger logger = LoggerFactory.getLogger(NettunitService.class);
+
+
+    @PostConstruct
+    private void postConstruct() {
+        pendingMessagesService.setListener(new PendingMessageComponentListener() {
+            @Override
+            public void completeTask(String taskID) {
+                taskService.complete(taskID);
             }
         });
-        t1.start();
-
-
     }
 
-    private static Logger logger = LoggerFactory.getLogger(NettunitService.class);
 
     //********************************************************** deployment service methods **********************************************************
 
