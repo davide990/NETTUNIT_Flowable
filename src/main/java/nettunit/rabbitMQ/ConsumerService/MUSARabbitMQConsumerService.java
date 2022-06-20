@@ -1,10 +1,12 @@
-package nettunit.rabbitMQ;
+package nettunit.rabbitMQ.ConsumerService;
 
 import RabbitMQ.Consumer.MUSARabbitMQConsumer;
 import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventReport;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.MUSAConsumerListener;
+import nettunit.NettunitService;
+import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class MUSARabbitMQConsumerService {
 
     private Thread consumerTask;
 
+    @Autowired
+    NettunitService nettunitService;
+
     private static Logger logger = LoggerFactory.getLogger(MUSARabbitMQConsumerService.class);
 
     @Autowired
@@ -46,6 +51,7 @@ public class MUSARabbitMQConsumerService {
                     @Override
                     public void onReceiveJixelEvent(JixelEvent event) {
                         //TODO here, should I create a new process instance?
+                        nettunitService.applyInterventionRequest(event);
                     }
 
                     @Override

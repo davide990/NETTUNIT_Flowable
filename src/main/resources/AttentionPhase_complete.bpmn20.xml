@@ -68,6 +68,12 @@
     <boundaryEvent id="boundaryerror3" name="Error" attachedToRef="prefect_inform_orgs">
       <errorEventDefinition errorRef="REQUIRE_ORCHESTRATION"></errorEventDefinition>
     </boundaryEvent>
+    <boundaryEvent id="boundarytimer1" name="Timer" attachedToRef="activate_plan_intern" cancelActivity="false">
+      <timerEventDefinition>
+        <timeDuration>PT5S</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+    <sequenceFlow id="flow20" sourceRef="boundarytimer1" targetRef="reorganize_plan"></sequenceFlow>
     <serviceTask id="reorganize_plan" name="Reorganizer Plan d'urgence" flowable:class="nettunit.handler.MUSAOrchestrationHandler"></serviceTask>
     <sequenceFlow id="flow15" sourceRef="boundaryerror2" targetRef="reorganize_plan"></sequenceFlow>
     <sequenceFlow id="flow16" sourceRef="boundaryerror3" targetRef="reorganize_plan"></sequenceFlow>
@@ -101,6 +107,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="activate_plan_intern" id="BPMNShape_activate_plan_intern">
         <omgdc:Bounds height="55.0" width="115.0" x="260.0" y="300.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundarytimer1" id="BPMNShape_boundarytimer1">
+        <omgdc:Bounds height="30.0" width="30.0" x="310.0" y="290.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="determine_scenario" id="BPMNShape_determine_scenario">
         <omgdc:Bounds height="55.0" width="141.0" x="410.0" y="300.0"></omgdc:Bounds>
@@ -251,6 +260,11 @@
       <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
         <omgdi:waypoint x="722.0" y="157.0"></omgdi:waypoint>
         <omgdi:waypoint x="721.0" y="125.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow20" id="BPMNEdge_flow20">
+        <omgdi:waypoint x="325.0" y="290.0"></omgdi:waypoint>
+        <omgdi:waypoint x="324.0" y="184.0"></omgdi:waypoint>
+        <omgdi:waypoint x="652.0" y="184.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="association1" id="BPMNEdge_association1">
         <omgdi:waypoint x="1039.0" y="347.0"></omgdi:waypoint>

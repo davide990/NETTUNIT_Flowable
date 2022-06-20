@@ -1,10 +1,11 @@
-package nettunit.rabbitMQ;
+package nettunit.rabbitMQ.ConsumerService;
 
 import RabbitMQ.Consumer.JixelRabbitMQConsumer;
 import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Recipient;
+import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

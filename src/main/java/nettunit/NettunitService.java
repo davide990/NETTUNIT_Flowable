@@ -1,6 +1,5 @@
 package nettunit;
 
-import RabbitMQ.Consumer.JixelRabbitMQConsumer;
 import RabbitMQ.JixelEvent;
 import RabbitMQ.Producer.MUSARabbitMQProducer;
 import lombok.AccessLevel;
@@ -10,8 +9,8 @@ import nettunit.dto.InterventionRequest;
 import nettunit.dto.ProcessInstanceResponse;
 import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
-import nettunit.rabbitMQ.PendingMessageComponentListener;
-import nettunit.rabbitMQ.JixelRabbitMQConsumerService;
+import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
+import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
@@ -48,65 +47,18 @@ public class NettunitService {
     ProcessEngine processEngine;
     RepositoryService repositoryService;
 
-    // this is used to consume messages received from Jixel
-    private static JixelRabbitMQConsumer consumer = new JixelRabbitMQConsumer();
-
+    @Autowired
+    private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
 
     @Autowired
-    private JixelRabbitMQConsumerService pendingMessagesService;
+    private MUSAProducerService MUSAProducer;
 
-    /*
-        {
-            Thread t1 = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    consumer.init();
-                    consumer.startConsumerAndAwait(100, new Some<>(new JixelConsumerListener() {
-                        @Override
-                        public void onReceiveJixelEvent(JixelEvent event) {
-                            completeTask(event);
-                            //TODO verify task name.
-                        }
-
-                        @Override
-                        public void onAddRecipient(Recipient r) {
-                            completeTask(r);
-                        }
-
-                        @Override
-                        public void onReceiveJixelEventUpdate(JixelEventUpdate update) {
-                            completeTask(update);
-                        }
-                    }));
-                }
-
-                private void completeTask(Object obj) {
-                    String pendingTaskID = pendingMessagesService.getTaskID(obj);
-                    if(!pendingTaskID.isEmpty()){
-                        pendingMessagesService.remove(obj);
-                        taskService.complete(pendingTaskID);
-                        System.out.println("ACK");
-                    }
-                }
-            });
-            t1.start();
-
-
-        }
-    */
     private static Logger logger = LoggerFactory.getLogger(NettunitService.class);
-
 
     @PostConstruct
     private void postConstruct() {
-        pendingMessagesService.setListener(new PendingMessageComponentListener() {
-            @Override
-            public void completeTask(String taskID) {
-                taskService.complete(taskID);
-            }
-        });
+        jixelRabbitMQConsumerService.setListener(taskID -> taskService.complete(taskID));
     }
-
 
     //********************************************************** deployment service methods **********************************************************
 
@@ -123,6 +75,24 @@ public class NettunitService {
         return repositoryService.createProcessDefinitionQuery().list();
     }
 
+    public ProcessInstanceResponse applyInterventionRequest(JixelEvent incidentEvent) {
+
+        Map<String, Object> variables = new HashMap<String, Object>();
+
+        variables.put("id", incidentEvent.id());
+        variables.put("eventType", incidentEvent.eventType());
+
+        //variables.put("event", incidentEvent);
+
+        repositoryService.createProcessDefinitionQuery().list();
+
+        ProcessInstance processInstance =
+                runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
+
+        ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
+        ProcessInstancesRegister.get().add(pr);
+        return pr;
+    }
 
     public ProcessInstanceResponse applyInterventionRequest(InterventionRequest interventionRequest) {
 
@@ -137,9 +107,7 @@ public class NettunitService {
 
         ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
         ProcessInstancesRegister.get().add(pr);
-        //processRepo.save(pr);
         return pr;
-        //return new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
     }
 
     /**
@@ -196,33 +164,12 @@ public class NettunitService {
         return taskDetails;
     }
 
-    /**
-     * After the safety manager assesses the incident, requires the intervention of the competent bodies
-     *
-     * @param taskId
-     * @param requireIntervention
-     */
-    public void requireIntervention(String taskId, Boolean requireIntervention) {
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("requireIntervention", requireIntervention.booleanValue());
-        taskService.complete(taskId, variables);
-    }
-
-    public void makeAssessment(String taskId) {
-        taskService.complete(taskId);
-    }
-
     public void gestionnaire_confirmReceivedNotification(String taskId) {
-
-        MUSARabbitMQProducer MUSA = new MUSARabbitMQProducer();
         JixelEvent fireInRefinery = new JixelEvent("INCENDIO IN RAFFINERIA", "INCENDIO");
-        MUSA.notifyEvent(fireInRefinery);
+        MUSAProducer.notifyEvent(fireInRefinery);
 
-//        repository.save(new PendingMessage(taskId, fireInRefinery));
-        pendingMessagesService.save(fireInRefinery, taskId);
-        //pendingMessages.put(fireInRefinery, taskId);
-
-        //taskService.complete(taskId);
+        //Wait until Jixel consumes the message to complete the task
+        jixelRabbitMQConsumerService.save(fireInRefinery, taskId);
     }
 
     public void gestionnaire_activateInternalSecurityPlan(String taskId) {
