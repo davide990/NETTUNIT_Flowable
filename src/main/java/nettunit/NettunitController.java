@@ -9,8 +9,14 @@ import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
+/**
+ * This class is used in REST Web service. The methods in this class are invoked after a REST request from the
+ * specified endpoint. The endpoint make reference to specific actions to carry out for solving the emergency plan
+ * in BPMN format.
+ */
 @RestController
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
@@ -20,7 +26,7 @@ public class NettunitController {
 
     //********************************************************** deployment endpoints **********************************************************
     @PostMapping("/deploy")
-    public void deployWorkflow() {
+    public void deployWorkflow() throws IOException {
         nettunitService.deployProcessDefinition();
     }
 

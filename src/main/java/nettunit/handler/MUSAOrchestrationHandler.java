@@ -1,6 +1,5 @@
 package nettunit.handler;
 
-import nettunit.listener.TaskExecutionListener;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;

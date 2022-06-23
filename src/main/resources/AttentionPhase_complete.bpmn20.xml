@@ -10,8 +10,8 @@
     <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="notify_gestionnaire"></sequenceFlow>
     <serviceTask id="notify_gestionnaire" name="Notifier gestionnaire" flowable:class="nettunit.handler.NotifierGestionnaireHandler">
     <extensionElements>
-            <flowable:executionListener event="start" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
-            <flowable:executionListener event="end" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
+            <flowable:executionListener event="start" class="nettunit.listener.TaskStartedExecutionListenerImpl"></flowable:executionListener>
+            <flowable:executionListener event="end" class="nettunit.listener.TaskEndendExecutionListenerImpl"></flowable:executionListener>
           </extensionElements>
     </serviceTask>
     <userTask id="gestionnaire_confirm_receive_notification" name="Recevoir notification incident"
@@ -56,7 +56,8 @@
     <serviceTask id="gestionnaire_inform_orgs" name="Informer les org. techniques et de secours" flowable:class="nettunit.handler.GestionnaireInformOrganizations"></serviceTask>
     <serviceTask id="prefect_inform_orgs" name="Informer les org. techniques et de secours" flowable:class="nettunit.handler.PrefectInformOrganizations">
       <extensionElements>
-        <flowable:executionListener event="start" class="nettunit.listener.TaskExecutionListener"></flowable:executionListener>
+        <flowable:executionListener event="start" class="nettunit.listener.TaskStartedExecutionListenerImpl"></flowable:executionListener>
+        <flowable:executionListener event="end" class="nettunit.listener.TaskEndendExecutionListenerImpl"></flowable:executionListener>
       </extensionElements>
     </serviceTask>
     <boundaryEvent id="boundaryerror1" name="Error" attachedToRef="notify_gestionnaire">
@@ -80,7 +81,12 @@
     <sequenceFlow id="flow17" sourceRef="boundaryerror1" targetRef="reorganize_plan"></sequenceFlow>
     <endEvent id="endevent4" name="End"></endEvent>
     <sequenceFlow id="flow18" sourceRef="reorganize_plan" targetRef="endevent4"></sequenceFlow>
-    <serviceTask id="monitor_incident_task" name="Monitorer l'incident" flowable:class="nettunit.handler.MonitorIncidentHandler"></serviceTask>
+    <serviceTask id="monitor_incident_task" name="Monitorer l'incident" flowable:class="nettunit.handler.MonitorIncidentHandler">
+      <extensionElements>
+        <flowable:executionListener event="start" class="nettunit.listener.TaskStartedExecutionListenerImpl"></flowable:executionListener>
+        <flowable:executionListener event="end" class="nettunit.listener.TaskEndendExecutionListenerImpl"></flowable:executionListener>
+      </extensionElements>
+    </serviceTask>
     <textAnnotation id="textannotation1">
       <text>Incident résolu?</text>
     </textAnnotation>

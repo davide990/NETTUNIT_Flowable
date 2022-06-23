@@ -25,6 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +66,7 @@ public class NettunitService {
 
     //********************************************************** deployment service methods **********************************************************
 
-    public void deployProcessDefinition() {
-
+    public void deployProcessDefinition() throws IOException {
         Deployment deployment =
                 repositoryService
                         .createDeployment()
@@ -75,15 +78,18 @@ public class NettunitService {
         return repositoryService.createProcessDefinitionQuery().list();
     }
 
+    /**
+     * Entry point for the emergency plan. This operation creates a new instance of the emegency plan
+     *
+     * @param incidentEvent
+     * @return
+     */
     public ProcessInstanceResponse applyInterventionRequest(JixelEvent incidentEvent) {
 
         Map<String, Object> variables = new HashMap<String, Object>();
 
         variables.put("id", incidentEvent.id());
         variables.put("eventType", incidentEvent.eventType());
-
-        //variables.put("event", incidentEvent);
-
         repositoryService.createProcessDefinitionQuery().list();
 
         ProcessInstance processInstance =
