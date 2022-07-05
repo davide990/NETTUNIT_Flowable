@@ -15,6 +15,9 @@
 
 
     <dependencies>
+
+
+        <!-- includes apache http client dependency-->
         <dependency>
             <groupId>musajixelinterface</groupId>
             <artifactId>musajixelinterface_2.13</artifactId>
@@ -40,7 +43,7 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-spring-boot-starter</artifactId>
-            <version>6.4.1</version>
+            <version>6.7.2</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -65,18 +68,11 @@
             <version>2.2</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
         <dependency>
-            <groupId>com.github.gwenn</groupId>
-            <artifactId>sqlite-dialect</artifactId>
-            <version>0.1.2</version>
-        </dependency>
-
-
-
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.25.2</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.4.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core -->
@@ -97,8 +93,6 @@
             <artifactId>hibernate-entitymanager</artifactId>
             <version>5.2.3.Final</version>
         </dependency>
-
-
 
 
     </dependencies>

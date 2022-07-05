@@ -1,5 +1,6 @@
 package nettunit;
 
+import JixelAPIInterface.Login.LoginToken;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -74,9 +75,15 @@ public class NettunitController {
 
     //********************************************************** GESTIONNAIRE **********************************************************
 
-    @PostMapping("/gestionnaire/confirmer_notification/{taskID}")
+    /*@PostMapping("/gestionnaire/confirmer_notification/{taskID}")
     public void gestionnaire_confirmReceivedNotification(@PathVariable("taskID") String taskID) {
         nettunitService.gestionnaire_confirmReceivedNotification(taskID);
+
+    }*/
+    @PostMapping("/gestionnaire/confirmer_notification/{taskID}")
+    public void gestionnaire_confirmReceivedNotification(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
+        nettunitService.gestionnaire_confirmReceivedNotification(loginToken, taskID);
+
     }
 
     @PostMapping("/gestionnaire/activer_plan_securite_interne/{taskID}")

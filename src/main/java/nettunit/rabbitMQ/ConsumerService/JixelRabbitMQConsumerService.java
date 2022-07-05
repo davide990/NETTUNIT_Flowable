@@ -5,6 +5,7 @@ import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Recipient;
+
 import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,29 +46,25 @@ public class JixelRabbitMQConsumerService {
     @Autowired
     public JixelRabbitMQConsumerService() {
         pendingMessages = new HashMap<>();
-        consumerTask = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                consumer.init();
-                consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new JixelConsumerListener() {
-                    @Override
-                    public void onReceiveJixelEvent(JixelEvent event) {
-                        completeTask(event);
-                    }
+        consumerTask = new Thread(() -> {
+            consumer.init();
+            consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new JixelConsumerListener() {
+                @Override
+                public void onCreateEvent(JixelEvent event) {
+                    completeTask(event);
+                }
 
-                    @Override
-                    public void onAddRecipient(Recipient r) {
-                        completeTask(r);
-                    }
+                @Override
+                public void onAddRecipient(Recipient r) {
+                    completeTask(r);
+                }
 
-                    @Override
-                    public void onReceiveJixelEventUpdate(JixelEventUpdate update) {
-                        completeTask(update);
-                    }
-                }));
-            }
+                @Override
+                public void onEventUpdate(JixelEventUpdate update) {
+                    completeTask(update);
+                }
 
-
+            }));
         });
     }
 

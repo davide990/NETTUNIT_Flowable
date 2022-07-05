@@ -1,7 +1,8 @@
 package nettunit;
 
+import JixelAPIInterface.Login.LoginToken;
 import RabbitMQ.JixelEvent;
-import RabbitMQ.Producer.MUSARabbitMQProducer;
+import Utils.JixelUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -9,6 +10,7 @@ import nettunit.dto.InterventionRequest;
 import nettunit.dto.ProcessInstanceResponse;
 import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
+import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.ProcessEngine;
@@ -22,17 +24,15 @@ import org.flowable.task.api.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import scala.Option;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.security.InvalidParameterException;
+import java.util.*;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -44,16 +44,29 @@ public class NettunitService {
     public static final String PREFECTURE_CANDIDATE_GROUP = "prefecture";
     public static final String EQUIPE_INTERNE_CANDIDATE_GROUP = "equipe_interne";
 
+    // ID of the process to be deployed
     public static final String PROCESS_DEFINITION_KEY = "nettunitProcess_attentionPhase";
 
     RuntimeService runtimeService;
     TaskService taskService;
     ProcessEngine processEngine;
     RepositoryService repositoryService;
+    NettunitTaskHistory history;
 
+    @Autowired
+    private Environment env;
+
+    /**
+     * Service that handle the messages that are consumed by Jixel. Please note that this is necessary only for testing
+     * purposes. Once the nettunit platform is deployed, this will not be used as this service will be available from
+     * IES solution.
+     */
     @Autowired
     private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
 
+    /**
+     * Service used to produce and send messages from MUSA to Jixel
+     */
     @Autowired
     private MUSAProducerService MUSAProducer;
 
@@ -64,7 +77,22 @@ public class NettunitService {
         jixelRabbitMQConsumerService.setListener(taskID -> taskService.complete(taskID));
     }
 
-    //********************************************************** deployment service methods **********************************************************
+    /**
+     * This method is invoked once the NETTUNIT platform is shut down.
+     */
+    @PreDestroy
+    private void preDestroy() {
+        Boolean deleteUnfinishedInstances =
+                Boolean.parseBoolean(env.getProperty("nettunit.remove_unfinished_processes_on_terminate"));
+        if (!deleteUnfinishedInstances) {
+            return;
+        }
+        logger.info("~~~~~~SHUTTING DOWN~~~~~~\nAll unfinished process will be deleted");
+        history.getUnfinishedProcessIDs()
+                .forEach(pID -> runtimeService.deleteProcessInstance(pID, "[NETTUNIT] Unfinished process"));
+    }
+
+    //********************************************************** deployment service methods ****************************
 
     public void deployProcessDefinition() throws IOException {
         Deployment deployment =
@@ -74,36 +102,53 @@ public class NettunitService {
                         .deploy();
     }
 
+    /**
+     * Return the list of process definitions loaded into the current flowable instance
+     *
+     * @return
+     */
     public List<ProcessDefinition> getProcessDefinitionsList() {
         return repositoryService.createProcessDefinitionQuery().list();
     }
 
     /**
-     * Entry point for the emergency plan. This operation creates a new instance of the emegency plan
+     * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
+     * <p>
+     * This is invoked when the system receives a new JixelEvent message from Jixel
      *
      * @param incidentEvent
      * @return
      */
     public ProcessInstanceResponse applyInterventionRequest(JixelEvent incidentEvent) {
-
+        logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE~~~~~~~~~~~~~");
         Map<String, Object> variables = new HashMap<String, Object>();
 
         variables.put("id", incidentEvent.id());
-        variables.put("eventType", incidentEvent.eventType());
+        variables.put("event_type", incidentEvent.incident_type().description());
         repositoryService.createProcessDefinitionQuery().list();
 
         ProcessInstance processInstance =
                 runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
+
 
         ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
         ProcessInstancesRegister.get().add(pr);
         return pr;
     }
 
+    /**
+     * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
+     * <p>
+     * This is invoked when a new intervention request is inserted manually. This is for development purpose
+     * only, as we suppose that plans are activated only when a new jixel event is received
+     *
+     * @param interventionRequest
+     * @return
+     */
     public ProcessInstanceResponse applyInterventionRequest(InterventionRequest interventionRequest) {
-
+        logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE~~~~~~~~~~~~~");
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("gestionnaire", interventionRequest.getEmpName());
+        variables.put("employee_name", interventionRequest.getEmpName());
         variables.put("description", interventionRequest.getRequestDescription());
 
         repositoryService.createProcessDefinitionQuery().list();
@@ -113,6 +158,7 @@ public class NettunitService {
 
         ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
         ProcessInstancesRegister.get().add(pr);
+
         return pr;
     }
 
@@ -127,6 +173,24 @@ public class NettunitService {
         List<TaskDetails> taskDetails = getTaskDetails(tasks);
 
         return taskDetails;
+    }
+
+    /**
+     * Return the process instance ID which the input task belongs to.
+     *
+     * @param taskID
+     * @return a process ID
+     */
+    private String getProcessID(String taskID) {
+        //get the tasks
+        List<Task> tasks = taskService.createTaskQuery().list();
+        //get the one which task id matches the input ID
+        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        if (tt.isPresent()) {
+            //return the corresponding process ID
+            return tt.get().getProcessInstanceId();
+        }
+        throw new InvalidParameterException("No task found for specified task ID.");
     }
 
     public List<TaskDetails> getGestionnaireTasks() {
@@ -170,12 +234,16 @@ public class NettunitService {
         return taskDetails;
     }
 
-    public void gestionnaire_confirmReceivedNotification(String taskId) {
-        JixelEvent fireInRefinery = new JixelEvent("INCENDIO IN RAFFINERIA", "INCENDIO");
-        MUSAProducer.notifyEvent(fireInRefinery);
+    public void gestionnaire_confirmReceivedNotification(LoginToken loginToken, String taskId) {
+        //JixelEvent fireInRefinery = JixelUtil.getJixelEvent(new LoginToken(user, pass), 67);
+        Option<JixelEvent> jixelEvent = JixelUtil.getJixelEvent(loginToken, 69);
 
+        //JixelEvent fireInRefinery = JixelUtil.getJixelEvent(loginToken, 69);
+        MUSAProducer.notifyEvent(jixelEvent.get());
         //Wait until Jixel consumes the message to complete the task
-        jixelRabbitMQConsumerService.save(fireInRefinery, taskId);
+        jixelRabbitMQConsumerService.save(jixelEvent.get(), taskId);
+
+        System.out.println("OK");
     }
 
     public void gestionnaire_activateInternalSecurityPlan(String taskId) {

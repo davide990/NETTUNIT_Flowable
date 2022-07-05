@@ -5,6 +5,7 @@ import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventReport;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.MUSAConsumerListener;
+import RabbitMQ.Recipient;
 import nettunit.NettunitService;
 import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
@@ -43,30 +44,35 @@ public class MUSARabbitMQConsumerService {
     @Autowired
     public MUSARabbitMQConsumerService() {
         pendingMessages = new HashMap<>();
-        consumerTask = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                consumer.init();
-                consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new MUSAConsumerListener() {
-                    @Override
-                    public void onReceiveJixelEvent(JixelEvent event) {
-                        //TODO here, should I create a new process instance?
-                        nettunitService.applyInterventionRequest(event);
-                    }
+        /**
+         * Create a new consumer for the events that are consumed by MUSA (produced by Jixel).
+         * The consumer is associated to a listener, whose methods are invoked when a message produced by jixel is
+         * consumed by musa.
+         */
+        consumerTask = new Thread(() -> {
+            consumer.init();
+            consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new MUSAConsumerListener() {
+                @Override
+                public void onNotifyEvent(JixelEvent event) {
+                    //TODO here, should I create a new process instance?
+                    nettunitService.applyInterventionRequest(event);
+                }
 
-                    @Override
-                    public void onReceiveJixelEventUpdate(JixelEventUpdate update) {
-                        //Check for the activity requiring an update
-                    }
+                @Override
+                public void onEventUpdate(JixelEventUpdate update) {
+                    //Check for the activity requiring an update
+                }
 
-                    @Override
-                    public void onReceiveJixelReport(JixelEventReport report) {
-                        //Check for the activity requiring a report
-                    }
-                }));
-            }
+                @Override
+                public void onReceiveJixelReport(JixelEventReport report) {
+                    //Check for the activity requiring a report
+                }
 
+                @Override
+                public void onAddRecipient(Recipient r) {
 
+                }
+            }));
         });
     }
 

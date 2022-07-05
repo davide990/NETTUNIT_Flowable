@@ -1,6 +1,5 @@
 package nettunit.taskService;
 
-import RabbitMQ.Producer.MUSARabbitMQProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,7 @@ public class TaskListenerService {
         myList = new ArrayList<>();
     }
 
-
+    //TODO to implement
     public void myFun() {
         myList.add(33);
         System.out.println(myList.stream().map(x -> Integer.toString(x)).collect(Collectors.joining(", ")).toString());
