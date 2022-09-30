@@ -7,17 +7,16 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import nettunit.dto.InterventionRequest;
-import nettunit.dto.ProcessInstanceResponse;
-import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
 import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
-import org.flowable.engine.ProcessEngine;
-import org.flowable.engine.RepositoryService;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
+import org.apache.commons.io.IOUtils;
+import org.flowable.engine.*;
+import org.flowable.engine.impl.persistence.entity.DeploymentEntityImpl;
+import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.DeploymentProperties;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
@@ -27,12 +26,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import scala.Option;
+import scala.xml.PrettyPrinter;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardCopyOption;
 import java.security.InvalidParameterException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -64,6 +69,7 @@ public class NettunitService {
     @Autowired
     private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
 
+
     /**
      * Service used to produce and send messages from MUSA to Jixel
      */
@@ -75,6 +81,7 @@ public class NettunitService {
     @PostConstruct
     private void postConstruct() {
         jixelRabbitMQConsumerService.setListener(taskID -> taskService.complete(taskID));
+        processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
     }
 
     /**
@@ -94,12 +101,34 @@ public class NettunitService {
 
     //********************************************************** deployment service methods ****************************
 
+    public void clearAllExistingDeployments() {
+        List<String> previousDeploymentID = repositoryService.createDeploymentQuery().orderByDeploymentId().asc()
+                .list().stream().map(x -> x.getId()).collect(Collectors.toList());
+        previousDeploymentID.forEach(id -> repositoryService.deleteDeployment(id));
+    }
+
     public void deployProcessDefinition() throws IOException {
         Deployment deployment =
                 repositoryService
                         .createDeployment()
                         .addClasspathResource("AttentionPhase_complete.bpmn20.xml")
                         .deploy();
+    }
+
+    public void deployProcessDefinition(String processID, String processDef) {
+        //Note: the deployment fails if the resource name does not finish with either ".bpmn" or ".bpmn20.xml"
+        Deployment deployment =
+                repositoryService
+                        .createDeployment()
+                        .addString(processID + ".bpmn", processDef) //MUST BE .BPMN
+                        .deploy();
+
+        int numDeployedArtifact = ((DeploymentEntityImpl) deployment).getDeployedArtifacts(ProcessDefinitionEntityImpl.class).size();
+        if (numDeployedArtifact > 0) {
+            logger.info("SUCCESS: process deployment with id " + processID);
+        } else {
+            logger.error("FAIL: process deployment with id " + processID);
+        }
     }
 
     /**
@@ -111,6 +140,14 @@ public class NettunitService {
         return repositoryService.createProcessDefinitionQuery().list();
     }
 
+    public List<ProcessInstance> getActiveProcessInstances(String processDefinitionID) {
+        return runtimeService.createProcessInstanceQuery().active().list();
+    }
+
+    public List<ProcessDefinition> getActiveProcesses() {
+        return repositoryService.createProcessDefinitionQuery().active().list();
+    }
+
     /**
      * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
      * <p>
@@ -119,22 +156,16 @@ public class NettunitService {
      * @param incidentEvent
      * @return
      */
-    public ProcessInstanceResponse applyInterventionRequest(JixelEvent incidentEvent) {
+    public void applyInterventionRequest(JixelEvent incidentEvent) {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE~~~~~~~~~~~~~");
         Map<String, Object> variables = new HashMap<String, Object>();
-
         variables.put("id", incidentEvent.id());
         variables.put("event_type", incidentEvent.incident_type().description());
-        repositoryService.createProcessDefinitionQuery().list();
 
         ProcessInstance processInstance =
                 runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
-
-
-        ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
-        ProcessInstancesRegister.get().add(pr);
-        return pr;
     }
+
 
     /**
      * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
@@ -142,24 +173,23 @@ public class NettunitService {
      * This is invoked when a new intervention request is inserted manually. This is for development purpose
      * only, as we suppose that plans are activated only when a new jixel event is received
      *
-     * @param interventionRequest
+     * @param processInstanceRequest
      * @return
      */
-    public ProcessInstanceResponse applyInterventionRequest(InterventionRequest interventionRequest) {
+    public void applyInterventionRequest(InterventionRequest processInstanceRequest) {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE~~~~~~~~~~~~~");
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("employee_name", interventionRequest.getEmpName());
-        variables.put("description", interventionRequest.getRequestDescription());
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("description", processInstanceRequest.getRequestDescription());
 
-        repositoryService.createProcessDefinitionQuery().list();
+        // IMPORTANT
+        // note that this is mandatory
+        // I replaced the Tee symbol in sequence flow condition with the expression ${myVariable}.
+        // If myVariable is unknown, the execution of the plan will fail.
+        variables.put("myVariable", true);
 
+        //Start the process
         ProcessInstance processInstance =
-                runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
-
-        ProcessInstanceResponse pr = new ProcessInstanceResponse(processInstance.getId(), "begin", processInstance.isEnded());
-        ProcessInstancesRegister.get().add(pr);
-
-        return pr;
+                runtimeService.startProcessInstanceByKey(processInstanceRequest.getEmergencyID(), variables);
     }
 
     /**
@@ -235,14 +265,10 @@ public class NettunitService {
     }
 
     public void gestionnaire_confirmReceivedNotification(LoginToken loginToken, String taskId) {
-        //JixelEvent fireInRefinery = JixelUtil.getJixelEvent(new LoginToken(user, pass), 67);
         Option<JixelEvent> jixelEvent = JixelUtil.getJixelEvent(loginToken, 69);
-
-        //JixelEvent fireInRefinery = JixelUtil.getJixelEvent(loginToken, 69);
         MUSAProducer.notifyEvent(jixelEvent.get());
         //Wait until Jixel consumes the message to complete the task
         jixelRabbitMQConsumerService.save(jixelEvent.get(), taskId);
-
         System.out.println("OK");
     }
 

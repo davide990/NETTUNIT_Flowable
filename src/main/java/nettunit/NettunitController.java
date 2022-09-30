@@ -5,13 +5,16 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import nettunit.dto.InterventionRequest;
-import nettunit.dto.ProcessInstanceResponse;
-import nettunit.dto.ProcessInstancesRegister;
 import nettunit.dto.TaskDetails;
+import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class is used in REST Web service. The methods in this class are invoked after a REST request from the
@@ -26,31 +29,56 @@ public class NettunitController {
     NettunitService nettunitService;
 
     //********************************************************** deployment endpoints **********************************************************
-    @PostMapping("/deploy")
+    @PostMapping("/NETTUNIT/clearDeployments")
+    public void clearDeployments() {
+        nettunitService.clearAllExistingDeployments();
+    }
+
+    @PostMapping("/NETTUNIT/deploy")
     public void deployWorkflow() throws IOException {
         nettunitService.deployProcessDefinition();
     }
 
-    @PostMapping("/incident/complete_task/{taskId}")
-    public void completeTask(@PathVariable("taskId") String taskId) {
-        /*nettunitService.completeTask(taskId);*/
+    @PostMapping("/NETTUNIT/deployProcess/{processID}")
+    public void deployWorkflow(@PathVariable("processID") String processID, @RequestBody String processDef) {
+        nettunitService.deployProcessDefinition(processID, processDef);
     }
 
-    @GetMapping("/incident/list")
-    public List<ProcessInstanceResponse> getProcessDefinitions() {
-        return ProcessInstancesRegister.get().processes();
+    @GetMapping("/NETTUNIT/incident_list/{processDefinitionID}")
+    public List<Map<String, Object>> getActiveProcessInstances(@PathVariable("processDefinitionID") String processDefinitionID) {
+        List<Map<String, Object>> processInstanceMapping = new ArrayList<>();
+        for (ProcessInstance pp : nettunitService.getActiveProcessInstances(processDefinitionID)) {
+            Map<String, Object> map = new HashMap<>();//objectMapper.convertValue(lp, Map.class);
+            map.put("name", pp.getName());
+            map.put("startTime", pp.getStartTime());
+            map.put("processDefinitionName", pp.getProcessDefinitionName());
+            map.put("processDefinitionId", pp.getProcessDefinitionId());
+            map.put("processDefinitionKey", pp.getProcessDefinitionKey());
+            map.put("processVariables", pp.getProcessVariables());
+            map.put("isSuspended", pp.isSuspended());
+            map.put("isEnded", pp.isEnded());
+            map.put("processDefinitionVersion", pp.getProcessDefinitionVersion());
+            map.put("description", pp.getDescription());
+            processInstanceMapping.add(map);
+        }
+        return processInstanceMapping;
     }
 
-    @GetMapping("/incident/{processID}/tasks")
+    @GetMapping("/NETTUNIT/incident_list/")
+    public List<ProcessDefinition> getActiveProcesses() {
+        return nettunitService.getActiveProcesses();
+    }
+
+    @GetMapping("/NETTUNIT/tasks/{processID}")
     public List<TaskDetails> getProcessDefinitions(@PathVariable("processID") String processID) {
         return nettunitService.getTasks(processID);
     }
 
     //********************************************************** process endpoints **********************************************************
 
-    @PostMapping("/incident/apply")
-    public ProcessInstanceResponse applyInterventionRequest(@RequestBody InterventionRequest interventionRequest) {
-        return nettunitService.applyInterventionRequest(interventionRequest);
+    @PostMapping("/NETTUNIT/incident/apply")
+    public void applyInterventionRequest(@RequestBody InterventionRequest interventionRequest) {
+        nettunitService.applyInterventionRequest(interventionRequest);
     }
 
     @GetMapping("/equipe_interne/tasks/")
@@ -75,11 +103,6 @@ public class NettunitController {
 
     //********************************************************** GESTIONNAIRE **********************************************************
 
-    /*@PostMapping("/gestionnaire/confirmer_notification/{taskID}")
-    public void gestionnaire_confirmReceivedNotification(@PathVariable("taskID") String taskID) {
-        nettunitService.gestionnaire_confirmReceivedNotification(taskID);
-
-    }*/
     @PostMapping("/gestionnaire/confirmer_notification/{taskID}")
     public void gestionnaire_confirmReceivedNotification(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
         nettunitService.gestionnaire_confirmReceivedNotification(loginToken, taskID);
@@ -87,7 +110,7 @@ public class NettunitController {
     }
 
     @PostMapping("/gestionnaire/activer_plan_securite_interne/{taskID}")
-    public void gestionnaire_activateInternalSecurityPlan(@PathVariable("taskID") String taskID) {
+    public void gestionnaire_activateInternalSecurityPlan(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
         nettunitService.gestionnaire_activateInternalSecurityPlan(taskID);
     }
 

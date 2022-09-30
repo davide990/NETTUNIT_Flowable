@@ -1,19 +1,16 @@
 package nettunit.listener;
 
-import nettunit.SpringContext;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.ExecutionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
 import java.util.Date;
-import java.util.Optional;
 
-public class TaskEndendExecutionListenerImpl implements ExecutionListener {
+public class TaskEndedExecutionListenerImpl implements ExecutionListener {
     private static SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-    private static Logger logger = LoggerFactory.getLogger(TaskEndendExecutionListenerImpl.class);
+    private static Logger logger = LoggerFactory.getLogger(TaskEndedExecutionListenerImpl.class);
 
     @Override
     public void notify(DelegateExecution execution) {

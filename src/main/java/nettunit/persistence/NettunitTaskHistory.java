@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.flowable.engine.HistoryService;
+import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,18 +25,56 @@ public class NettunitTaskHistory {
     //flowable history service. This is automatically injected
     HistoryService historyService;
 
+    /**
+     * Get the list of unfinished tasks
+     *
+     * @return a list of task ID
+     */
     public List<String> getUnfinishedProcessIDs() {
         return historyService.createHistoricProcessInstanceQuery().unfinished().list()
                 .stream().map(h -> h.getId()).collect(Collectors.toList());
     }
 
-    void isUnfinishedTask(String taskID) {
+    /**
+     * Check if the input task ID is unfinished
+     *
+     * @param taskID
+     */
+    public void isUnfinishedTask(String taskID) {
         historyService.createHistoricTaskInstanceQuery().list()
                 .stream().filter(p -> p.getId().equals(taskID)).findAny().isPresent();
     }
 
     /**
-     * Return the number of seconds elapsed since the task (which ID is the parameter) begin its execution
+     * Return the list of active process instances
+     *
+     * @param processDefinitionKey
+     * @return
+     */
+    public List<HistoricProcessInstance> activeProcesses(String processDefinitionKey) {
+        return historyService.createHistoricProcessInstanceQuery()
+                .unfinished()
+                .processDefinitionKey(processDefinitionKey)
+                .list();
+    }
+
+
+    /**
+     * Get 10 HistoricProcessInstances that are finished and which took the most time to complete
+     * (the longest duration) of all finished processes with the given definition ID.
+     *
+     * @return
+     */
+    public List<HistoricProcessInstance> longestEmergencyResponses(String processDefinitionKey) {
+        return historyService.createHistoricProcessInstanceQuery()
+                .finished()
+                .processDefinitionKey(processDefinitionKey)
+                .orderByProcessInstanceDuration().desc()
+                .listPage(0, 10);
+    }
+
+    /**
+     * Return the number of seconds elapsed since the task (which ID is the parameter) started its execution
      *
      * @param taskID
      * @return number of seconds elapsed, -1 if the task is not available
@@ -54,28 +93,28 @@ public class NettunitTaskHistory {
         return -1;
     }
 
-    List<HistoricTaskInstance> getFinishedTasks(String processID) {
+    public List<HistoricTaskInstance> getFinishedTasks(String processID) {
         return historyService.createHistoricTaskInstanceQuery().finished().list().stream()
                 .filter(x -> x.getProcessInstanceId().equals(processID)).collect(Collectors.toList());
     }
 
-    List<HistoricTaskInstance> getUnfinishedTasks(String processID) {
+    public List<HistoricTaskInstance> getUnfinishedTasks(String processID) {
         return historyService.createHistoricTaskInstanceQuery().list().stream()
                 .filter(x -> x.getProcessInstanceId().equals(processID) &&
                         !Optional.ofNullable(x.getEndTime()).isPresent()).collect(Collectors.toList());
     }
 
-    List<HistoricTaskInstance> getTasksCompletedOn(Date date, String processID) {
+    public List<HistoricTaskInstance> getTasksCompletedOn(Date date, String processID) {
         return historyService.createHistoricTaskInstanceQuery().taskCompletedOn(date).list().stream()
                 .filter(x -> x.getProcessInstanceId().equals(processID)).collect(Collectors.toList());
     }
 
-    List<HistoricTaskInstance> getTasksCompletedAfter(Date date, String processID) {
+    public List<HistoricTaskInstance> getTasksCompletedAfter(Date date, String processID) {
         return historyService.createHistoricTaskInstanceQuery().taskCompletedAfter(date).list().stream()
                 .filter(x -> x.getProcessInstanceId().equals(processID)).collect(Collectors.toList());
     }
 
-    List<HistoricTaskInstance> getTasksCompletedBefore(Date date, String processID) {
+    public List<HistoricTaskInstance> getTasksCompletedBefore(Date date, String processID) {
         return historyService.createHistoricTaskInstanceQuery().taskCompletedBefore(date).list().stream()
                 .filter(x -> x.getProcessInstanceId().equals(processID)).collect(Collectors.toList());
     }
@@ -87,7 +126,7 @@ public class NettunitTaskHistory {
      * @param taskID2
      * @return number of seconds elapsed, -1 if any of the two tasks are not available
      */
-    long getStartToStartElapsedTime(String taskID1, String taskID2) {
+    public long getStartToStartElapsedTime(String taskID1, String taskID2) {
         //Please note that I use findAny, however the ID of the task is unique
         Optional<HistoricTaskInstance> task1 = historyService.createHistoricTaskInstanceQuery().
                 list().stream().filter(x -> x.getId().equals(taskID1)).findAny();
@@ -111,7 +150,7 @@ public class NettunitTaskHistory {
      * @param taskID2
      * @return number of seconds elapsed, -1 if any of the two tasks are not available
      */
-    long getStartToEndElapsedTime(String taskID1, String taskID2) {
+    public long getStartToEndElapsedTime(String taskID1, String taskID2) {
         //Please note that I use findAny, however the ID of the task is unique
         Optional<HistoricTaskInstance> task1 = historyService.createHistoricTaskInstanceQuery().
                 list().stream().filter(x -> x.getId().equals(taskID1)).findAny();
@@ -138,7 +177,7 @@ public class NettunitTaskHistory {
      * @param taskID2
      * @return number of seconds elapsed, -1 if any of the two tasks are not available
      */
-    long getEndToStartElapsedTime(String taskID1, String taskID2) {
+    public long getEndToStartElapsedTime(String taskID1, String taskID2) {
         //Please note that I use findAny, however the ID of the task is unique
         Optional<HistoricTaskInstance> task1 = historyService.createHistoricTaskInstanceQuery().
                 list().stream().filter(x -> x.getId().equals(taskID1)).findAny();
@@ -165,7 +204,7 @@ public class NettunitTaskHistory {
      * @param taskID2
      * @return number of seconds elapsed, -1 if any of the two tasks are not available
      */
-    long getEndToEndElapsedTime(String taskID1, String taskID2) {
+    public long getEndToEndElapsedTime(String taskID1, String taskID2) {
         //Please note that I use findAny, however the ID of the task is unique
         Optional<HistoricTaskInstance> task1 = historyService.createHistoricTaskInstanceQuery().
                 list().stream().filter(x -> x.getId().equals(taskID1)).findAny();

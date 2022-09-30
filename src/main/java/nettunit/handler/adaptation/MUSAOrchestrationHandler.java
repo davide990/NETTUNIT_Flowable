@@ -1,4 +1,4 @@
-package nettunit.handler;
+package nettunit.handler.adaptation;
 
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
