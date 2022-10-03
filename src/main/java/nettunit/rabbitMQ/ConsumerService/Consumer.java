@@ -19,11 +19,9 @@ abstract public class Consumer {
      */
     private Map<Object, String> pendingMessages;
 
-
     protected Thread consumerTask;
 
     protected Logger logger;
-
 
     public Consumer() {
         pendingMessages = new HashMap<>();

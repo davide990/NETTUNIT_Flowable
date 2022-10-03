@@ -2,6 +2,7 @@ package nettunit;
 
 import JixelAPIInterface.Login.LoginToken;
 import RabbitMQ.JixelEvent;
+import RabbitMQ.JixelIncidentLocation;
 import Utils.JixelUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,12 +12,10 @@ import nettunit.dto.TaskDetails;
 import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
-import org.apache.commons.io.IOUtils;
 import org.flowable.engine.*;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntityImpl;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
-import org.flowable.engine.repository.DeploymentProperties;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
@@ -26,15 +25,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import scala.Option;
-import scala.xml.PrettyPrinter;
+import scala.collection.JavaConverters;
+import scala.collection.mutable.ArrayBuffer;
+import scala.concurrent.JavaConversions;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.StandardCopyOption;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,7 +47,7 @@ public class NettunitService {
     public static final String EQUIPE_INTERNE_CANDIDATE_GROUP = "equipe_interne";
 
     // ID of the process to be deployed
-    public static final String PROCESS_DEFINITION_KEY = "nettunitProcess_attentionPhase";
+    public static final String PROCESS_DEFINITION_KEY = "NETTUNIT_PROCESS";
 
     RuntimeService runtimeService;
     TaskService taskService;
@@ -115,6 +112,12 @@ public class NettunitService {
                         .deploy();
     }
 
+    /**
+     * This is used when deployment and execution are invoked from MUSA
+     *
+     * @param processID
+     * @param processDef
+     */
     public void deployProcessDefinition(String processID, String processDef) {
         //Note: the deployment fails if the resource name does not finish with either ".bpmn" or ".bpmn20.xml"
         Deployment deployment =
@@ -132,6 +135,27 @@ public class NettunitService {
     }
 
     /**
+     * This is invoked when only the BPMN definition of the emergency plan is provided
+     *
+     * @param processDef
+     */
+    public void deployProcessDefinition(String processDef) {
+        //Note: the deployment fails if the resource name does not finish with either ".bpmn" or ".bpmn20.xml"
+        Deployment deployment =
+                repositoryService
+                        .createDeployment()
+                        .addString(PROCESS_DEFINITION_KEY + ".bpmn", processDef) //MUST BE .BPMN
+                        .deploy();
+
+        int numDeployedArtifact = ((DeploymentEntityImpl) deployment).getDeployedArtifacts(ProcessDefinitionEntityImpl.class).size();
+        if (numDeployedArtifact > 0) {
+            logger.info("SUCCESS: process deployment with id " + PROCESS_DEFINITION_KEY);
+        } else {
+            logger.error("FAIL: process deployment with id " + PROCESS_DEFINITION_KEY);
+        }
+    }
+
+    /**
      * Return the list of process definitions loaded into the current flowable instance
      *
      * @return
@@ -140,12 +164,32 @@ public class NettunitService {
         return repositoryService.createProcessDefinitionQuery().list();
     }
 
+    /**
+     * Returns the list of process instances which ID is that provided in input
+     *
+     * @param processDefinitionID
+     * @return
+     */
     public List<ProcessInstance> getActiveProcessInstances(String processDefinitionID) {
         return runtimeService.createProcessInstanceQuery().active().list();
     }
 
+    /**
+     * @return
+     */
     public List<ProcessDefinition> getActiveProcesses() {
         return repositoryService.createProcessDefinitionQuery().active().list();
+    }
+
+
+
+    public List<String> getActiveProcessesID(){
+        List<Task> tasks = taskService.createTaskQuery().taskUnassigned().list();
+        List<String> processIds = new ArrayList<>();
+        for(Task t : tasks) {
+            processIds.add(t.getProcessInstanceId());
+        }
+        return processIds;
     }
 
     /**
@@ -161,6 +205,13 @@ public class NettunitService {
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("id", incidentEvent.id());
         variables.put("event_type", incidentEvent.incident_type().description());
+        variables.put("caller_name", incidentEvent.caller_name());
+
+        // IMPORTANT
+        // note that this is mandatory
+        // I replaced the Tee symbol in sequence flow condition with the expression ${myVariable}.
+        // If myVariable is unknown, the execution of the plan will fail.
+        variables.put("myVariable", true);
 
         ProcessInstance processInstance =
                 runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
@@ -189,7 +240,7 @@ public class NettunitService {
 
         //Start the process
         ProcessInstance processInstance =
-                runtimeService.startProcessInstanceByKey(processInstanceRequest.getEmergencyID(), variables);
+                runtimeService.startProcessInstanceByKey(processInstanceRequest.getEmergencyPlanID(), variables);
     }
 
     /**
@@ -247,7 +298,8 @@ public class NettunitService {
      */
     public List<TaskDetails> getTasks(String processID) {
         List<TaskDetails> taskDetails = new ArrayList<>();
-        for (Task task : taskService.createTaskQuery().processInstanceId(processID).list()) {
+        List<Task> taskList = taskService.createTaskQuery().processInstanceId(processID).list();
+        for (Task task : taskList) {
             Map<String, Object> processVariables = taskService.getVariables(task.getId());
             taskDetails.add(new TaskDetails(task.getId(), task.getName(), processID, processVariables));
         }
@@ -264,6 +316,11 @@ public class NettunitService {
         return taskDetails;
     }
 
+    /**
+     * domain specific method
+     * @param loginToken
+     * @param taskId
+     */
     public void gestionnaire_confirmReceivedNotification(LoginToken loginToken, String taskId) {
         Option<JixelEvent> jixelEvent = JixelUtil.getJixelEvent(loginToken, 69);
         MUSAProducer.notifyEvent(jixelEvent.get());
@@ -272,22 +329,46 @@ public class NettunitService {
         System.out.println("OK");
     }
 
+    public void completeTask(String taskID) {
+        taskService.complete(taskID);
+    }
+
+    /**
+     * domain specific method
+     * @param taskId
+     */
     public void gestionnaire_activateInternalSecurityPlan(String taskId) {
         taskService.complete(taskId);
     }
 
+    /**
+     * domain specific method
+     * @param taskId
+     */
     public void gestionnaire_selectPlanFromRepository(String taskId) {
         taskService.complete(taskId);
     }
 
+    /**
+     * domain specific method
+     * @param taskId
+     */
     public void prefecture_receiveIncidentEvaluation(String taskId) {
         taskService.complete(taskId);
     }
 
+    /**
+     * domain specific method
+     * @param taskId
+     */
     public void firefighter_receiveReport(String taskId) {
         taskService.complete(taskId);
     }
 
+    /**
+     * domain specific method
+     * @param taskId
+     */
     public void firefighter_sendRescueTeam(String taskId) {
         taskService.complete(taskId);
     }

@@ -44,11 +44,17 @@ public class NettunitController {
         nettunitService.deployProcessDefinition(processID, processDef);
     }
 
-    @GetMapping("/NETTUNIT/incident_list/{processDefinitionID}")
+    @GetMapping("/NETTUNIT/active_incident_list/{processDefinitionID}")
     public List<Map<String, Object>> getActiveProcessInstances(@PathVariable("processDefinitionID") String processDefinitionID) {
         List<Map<String, Object>> processInstanceMapping = new ArrayList<>();
         for (ProcessInstance pp : nettunitService.getActiveProcessInstances(processDefinitionID)) {
             Map<String, Object> map = new HashMap<>();//objectMapper.convertValue(lp, Map.class);
+            //pp.getProcessVariables()
+
+            for (String key : pp.getProcessVariables().keySet()) {
+                map.put(key, pp.getProcessVariables().get(key));
+            }
+            map.put("callbackID", pp.getCallbackId());
             map.put("name", pp.getName());
             map.put("startTime", pp.getStartTime());
             map.put("processDefinitionName", pp.getProcessDefinitionName());
@@ -65,13 +71,8 @@ public class NettunitController {
     }
 
     @GetMapping("/NETTUNIT/incident_list/")
-    public List<ProcessDefinition> getActiveProcesses() {
-        return nettunitService.getActiveProcesses();
-    }
-
-    @GetMapping("/NETTUNIT/tasks/{processID}")
-    public List<TaskDetails> getProcessDefinitions(@PathVariable("processID") String processID) {
-        return nettunitService.getTasks(processID);
+    public List<String> getActiveProcesses() {
+        return nettunitService.getActiveProcessesID();
     }
 
     //********************************************************** process endpoints **********************************************************
@@ -80,6 +81,46 @@ public class NettunitController {
     public void applyInterventionRequest(@RequestBody InterventionRequest interventionRequest) {
         nettunitService.applyInterventionRequest(interventionRequest);
     }
+
+    @GetMapping("/NETTUNIT/task_list/{processID}")
+    public List<TaskDetails> getAllTasks(@PathVariable("processID") String processID) {
+        return nettunitService.getTasks(processID);
+    }
+
+    @PostMapping("/NETTUNIT/safety manager/send_team_to_evaluate/{taskID}")
+    public void send_team_to_evaluate(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+    @PostMapping("/NETTUNIT/plant operator/activate_internal_security_plan/{taskID}")
+    public void activate_internal_security_plan(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+    @PostMapping("/NETTUNIT/commander_fire_brigade/fire_brigade_assessment/{taskID}")
+    public void fire_brigade_assessment(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+    @PostMapping("/NETTUNIT/prefect/declare_pre_alert_state/{taskID}")
+    public void declare_pre_alert_state(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+    @PostMapping("/NETTUNIT/ARPA/evaluate_fire_radiant_energy/{taskID}")
+    public void evaluate_fire_radiant_energy(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+    @PostMapping("/NETTUNIT/prefect/declare_alarm_state/{taskID}")
+    public void declare_alarm_state(@PathVariable("taskID") String taskID) {
+        nettunitService.completeTask(taskID);
+    }
+
+
+    //**********************************************************
+    //              OLD to delete
+    //**********************************************************
 
     @GetMapping("/equipe_interne/tasks/")
     public List<TaskDetails> getInternalEquipeTasks() {
@@ -102,11 +143,9 @@ public class NettunitController {
     }
 
     //********************************************************** GESTIONNAIRE **********************************************************
-
     @PostMapping("/gestionnaire/confirmer_notification/{taskID}")
     public void gestionnaire_confirmReceivedNotification(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
         nettunitService.gestionnaire_confirmReceivedNotification(loginToken, taskID);
-
     }
 
     @PostMapping("/gestionnaire/activer_plan_securite_interne/{taskID}")

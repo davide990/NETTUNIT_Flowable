@@ -3,12 +3,11 @@ package nettunit.dto;
 import lombok.Data;
 
 /**
- * An intervention request that can be submitted by user (the safety manager). Once received this
- * request by the system, a new emergency plan instance is created by flowable.
+ * Once received this request (in form of JSon after a POST request), a new emergency plan instance is created by flowable.
  */
 @Data
 public class InterventionRequest {
-    String emergencyID;
+    String emergencyPlanID;
     String empName;
     String requestDescription;
 }
