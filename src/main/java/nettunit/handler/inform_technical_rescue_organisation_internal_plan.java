@@ -2,8 +2,12 @@ package nettunit.handler;
 
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class inform_technical_rescue_organisation_internal_plan implements JavaDelegate {
+
+    private static Logger logger = LoggerFactory.getLogger(inform_technical_rescue_organisation_internal_plan.class);
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -13,7 +17,7 @@ public class inform_technical_rescue_organisation_internal_plan implements JavaD
 
 
 
-        System.out.println("Executing capability: " + className);
+        logger.info("Executing capability: " + className);
         //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

@@ -87,12 +87,12 @@ public class NettunitController {
         return nettunitService.getTasks(processID);
     }
 
-    @PostMapping("/NETTUNIT/safety manager/send_team_to_evaluate/{taskID}")
+    @PostMapping("/NETTUNIT/safety_manager/send_team_to_evaluate/{taskID}")
     public void send_team_to_evaluate(@PathVariable("taskID") String taskID) {
         nettunitService.completeTask(taskID);
     }
 
-    @PostMapping("/NETTUNIT/plant operator/activate_internal_security_plan/{taskID}")
+    @PostMapping("/NETTUNIT/plant_operator/activate_internal_security_plan/{taskID}")
     public void activate_internal_security_plan(@PathVariable("taskID") String taskID) {
         nettunitService.completeTask(taskID);
     }
@@ -115,64 +115,6 @@ public class NettunitController {
     @PostMapping("/NETTUNIT/prefect/declare_alarm_state/{taskID}")
     public void declare_alarm_state(@PathVariable("taskID") String taskID) {
         nettunitService.completeTask(taskID);
-    }
-
-
-    //**********************************************************
-    //              OLD to delete
-    //**********************************************************
-
-    @GetMapping("/equipe_interne/tasks/")
-    public List<TaskDetails> getInternalEquipeTasks() {
-        return nettunitService.getInternalEquipeTasks();
-    }
-
-    @GetMapping("/gestionnaire/tasks")
-    public List<TaskDetails> getGestionnaireTasks() {
-        return nettunitService.getGestionnaireTasks();
-    }
-
-    @GetMapping("/prefecture/tasks")
-    public List<TaskDetails> getPrefectureTasks() {
-        return nettunitService.getPrefectureTasks();
-    }
-
-    @GetMapping("/pompiers/tasks")
-    public List<TaskDetails> getPompiersTasks() {
-        return nettunitService.getPompiersTasks();
-    }
-
-    //********************************************************** GESTIONNAIRE **********************************************************
-    @PostMapping("/gestionnaire/confirmer_notification/{taskID}")
-    public void gestionnaire_confirmReceivedNotification(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
-        nettunitService.gestionnaire_confirmReceivedNotification(loginToken, taskID);
-    }
-
-    @PostMapping("/gestionnaire/activer_plan_securite_interne/{taskID}")
-    public void gestionnaire_activateInternalSecurityPlan(@RequestBody LoginToken loginToken, @PathVariable("taskID") String taskID) {
-        nettunitService.gestionnaire_activateInternalSecurityPlan(taskID);
-    }
-
-    @PostMapping("/gestionnaire/selection_plan_du_repertoire/{taskID}")
-    public void gestionnaire_selectPlanFromRepository(@PathVariable("taskID") String taskID) {
-        nettunitService.gestionnaire_selectPlanFromRepository(taskID);
-    }
-
-    //****************************************************** DIRIGEANT PREFECTURE ******************************************************
-    @PostMapping("/prefecture/confirmer_notification_evaluation/{taskID}")
-    public void prefecture_receiveIncidentEvaluation(@PathVariable("taskID") String taskID) {
-        nettunitService.prefecture_receiveIncidentEvaluation(taskID);
-    }
-
-    //****************************************************** POMPIERS ******************************************************
-    @PostMapping("/pompiers/confirmer_notification_evaluation/{taskID}")
-    public void firefighter_receiveReport(@PathVariable("taskID") String taskID) {
-        nettunitService.firefighter_receiveReport(taskID);
-    }
-
-    @PostMapping("/pompiers/envoie_equipe_secours/{taskID}")
-    public void firefighter_sendRescueTeam(@PathVariable("taskID") String taskID) {
-        nettunitService.firefighter_sendRescueTeam(taskID);
     }
 
 }

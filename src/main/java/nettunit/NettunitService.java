@@ -182,11 +182,10 @@ public class NettunitService {
     }
 
 
-
-    public List<String> getActiveProcessesID(){
+    public List<String> getActiveProcessesID() {
         List<Task> tasks = taskService.createTaskQuery().taskUnassigned().list();
         List<String> processIds = new ArrayList<>();
-        for(Task t : tasks) {
+        for (Task t : tasks) {
             processIds.add(t.getProcessInstanceId());
         }
         return processIds;
@@ -318,6 +317,7 @@ public class NettunitService {
 
     /**
      * domain specific method
+     *
      * @param loginToken
      * @param taskId
      */
@@ -333,43 +333,4 @@ public class NettunitService {
         taskService.complete(taskID);
     }
 
-    /**
-     * domain specific method
-     * @param taskId
-     */
-    public void gestionnaire_activateInternalSecurityPlan(String taskId) {
-        taskService.complete(taskId);
-    }
-
-    /**
-     * domain specific method
-     * @param taskId
-     */
-    public void gestionnaire_selectPlanFromRepository(String taskId) {
-        taskService.complete(taskId);
-    }
-
-    /**
-     * domain specific method
-     * @param taskId
-     */
-    public void prefecture_receiveIncidentEvaluation(String taskId) {
-        taskService.complete(taskId);
-    }
-
-    /**
-     * domain specific method
-     * @param taskId
-     */
-    public void firefighter_receiveReport(String taskId) {
-        taskService.complete(taskId);
-    }
-
-    /**
-     * domain specific method
-     * @param taskId
-     */
-    public void firefighter_sendRescueTeam(String taskId) {
-        taskService.complete(taskId);
-    }
 }
