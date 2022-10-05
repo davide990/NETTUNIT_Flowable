@@ -30,19 +30,18 @@ public class JixelRabbitMQConsumerService extends Consumer {
             consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new JixelConsumerListener() {
                 @Override
                 public void onCreateEvent(JixelEvent event) {
-                    completeTask(event);
+                    completeTaskByEvent(event);
                 }
 
                 @Override
                 public void onAddRecipient(Recipient r) {
-                    completeTask(r);
+                    completeTaskByEvent(r.event());
                 }
 
                 @Override
                 public void onEventUpdate(JixelEventUpdate update) {
-                    completeTask(update);
+                    completeTaskByEvent(update.event());
                 }
-
             }));
         });
     }

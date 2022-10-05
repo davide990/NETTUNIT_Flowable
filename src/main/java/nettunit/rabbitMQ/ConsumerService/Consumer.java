@@ -1,11 +1,15 @@
 package nettunit.rabbitMQ.ConsumerService;
 
+import RabbitMQ.JixelEvent;
+import RabbitMQ.JixelEventUpdate;
+import RabbitMQ.Recipient;
 import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 abstract public class Consumer {
     protected static int MAXIMUM_CONSUMER_MESSAGES_COUNT = 100000;
@@ -17,7 +21,7 @@ abstract public class Consumer {
      * until the message has been acknowledged from destination actor. Once acknowledged, the activity
      * of the process that provided the communication is completed
      */
-    private Map<Object, String> pendingMessages;
+    private Map<JixelEvent, String> pendingMessages;
 
     protected Thread consumerTask;
 
@@ -33,7 +37,7 @@ abstract public class Consumer {
      *
      * @param obj
      */
-    public void completeTask(Object obj) {
+    public void completeTask(JixelEvent obj) {
         String pendingTaskID = getTaskID(obj);
         if (!pendingTaskID.isEmpty()) {
             remove(obj);
@@ -42,16 +46,31 @@ abstract public class Consumer {
         }
     }
 
+    public void completeTaskByEvent(JixelEvent obj) {
+        String pendingTaskID = getTaskID(obj);
+
+        //Optional<JixelEvent> dd = pendingMessages.keySet().stream()
+        //        .filter(ev ->ev.id() == obj.id()).findAny();
+
+        boolean hasEvent = pendingMessages.keySet().stream().map(x->x.id()).collect(Collectors.toList()).contains(obj.id());
+        if (hasEvent) {
+            remove(obj);
+            listener.ifPresent(l -> l.completeTask(pendingTaskID));
+            logger.info("Completed Task with ID: " + pendingTaskID);
+        }
+    }
+
+
     public void setListener(PendingMessageComponentListener listener) {
         this.listener = Optional.of(listener);
     }
 
 
-    public String getTaskID(Object obj) {
+    public String getTaskID(JixelEvent obj) {
         return pendingMessages.getOrDefault(obj, "");
     }
 
-    public boolean remove(Object obj) {
+    public boolean remove(JixelEvent obj) {
         String pendingTaskID = pendingMessages.getOrDefault(obj, "");
         if (!pendingTaskID.isEmpty()) {
             pendingMessages.remove(obj);
@@ -70,7 +89,7 @@ abstract public class Consumer {
      * @param obj    the domain entity to be temporary saved
      * @param taskID the task ID
      */
-    public void save(Object obj, String taskID) {
+    public void save(JixelEvent obj, String taskID) {
         pendingMessages.put(obj, taskID);
     }
 

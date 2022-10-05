@@ -1,14 +1,13 @@
 package nettunit.handler;
 
-import nettunit.listener.TaskEndedExecutionListenerImpl;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class coordinate_firefighter_intervention implements JavaDelegate {
+public class keep_update_involved_personnel implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(coordinate_firefighter_intervention.class);
+    private static Logger logger = LoggerFactory.getLogger(keep_update_involved_personnel.class);
 
     @Override
     public void execute(DelegateExecution execution) {

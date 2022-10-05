@@ -1,12 +1,11 @@
 package nettunit;
 
-import JixelAPIInterface.Login.LoginToken;
+import RabbitMQ.Config;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import nettunit.dto.InterventionRequest;
 import nettunit.dto.TaskDetails;
-import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,6 +69,9 @@ public class NettunitController {
         return processInstanceMapping;
     }
 
+
+
+
     @GetMapping("/NETTUNIT/incident_list/")
     public List<String> getActiveProcesses() {
         return nettunitService.getActiveProcessesID();
@@ -89,32 +91,35 @@ public class NettunitController {
 
     @PostMapping("/NETTUNIT/safety_manager/send_team_to_evaluate/{taskID}")
     public void send_team_to_evaluate(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+        nettunitService.send_team_to_evaluate(taskID);
     }
 
     @PostMapping("/NETTUNIT/plant_operator/activate_internal_security_plan/{taskID}")
     public void activate_internal_security_plan(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+        nettunitService.activate_internal_security_plan(taskID);
     }
 
-    @PostMapping("/NETTUNIT/commander_fire_brigade/fire_brigade_assessment/{taskID}")
-    public void fire_brigade_assessment(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+    @PostMapping("/NETTUNIT/commander_fire_brigade/decide_response_type/{taskID}")
+    public void decide_response_type(@PathVariable("taskID") String taskID) {
+        nettunitService.decide_response_type(taskID);
     }
 
     @PostMapping("/NETTUNIT/prefect/declare_pre_alert_state/{taskID}")
     public void declare_pre_alert_state(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+        nettunitService.declare_pre_alert_state(taskID);
     }
 
     @PostMapping("/NETTUNIT/ARPA/evaluate_fire_radiant_energy/{taskID}")
     public void evaluate_fire_radiant_energy(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+        nettunitService.evaluate_fire_radiant_energy(taskID);
     }
 
     @PostMapping("/NETTUNIT/prefect/declare_alarm_state/{taskID}")
     public void declare_alarm_state(@PathVariable("taskID") String taskID) {
-        nettunitService.completeTask(taskID);
+        nettunitService.declare_alarm_state(taskID);
     }
+
+
+
 
 }
