@@ -5,6 +5,8 @@ import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Recipient;
+import nettunit.handler.notify_competent_body_internal_plan;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ public class JixelRabbitMQConsumerService extends Consumer {
     @Autowired
     public JixelRabbitMQConsumerService() {
         super();
-        logger = LoggerFactory.getLogger(JixelRabbitMQConsumerService.class);
+
         consumerTask = new Thread(() -> {
             consumer.init();
             consumer.startConsumerAndAwait(MAXIMUM_CONSUMER_MESSAGES_COUNT, new Some<>(new JixelConsumerListener() {

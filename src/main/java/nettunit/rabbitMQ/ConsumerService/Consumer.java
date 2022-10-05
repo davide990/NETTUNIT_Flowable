@@ -1,14 +1,12 @@
 package nettunit.rabbitMQ.ConsumerService;
 
 import RabbitMQ.JixelEvent;
-import RabbitMQ.JixelEventUpdate;
-import RabbitMQ.Recipient;
+import nettunit.handler.notify_competent_body_internal_plan;
 import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 abstract public class Consumer {
@@ -21,11 +19,12 @@ abstract public class Consumer {
      * until the message has been acknowledged from destination actor. Once acknowledged, the activity
      * of the process that provided the communication is completed
      */
-    private Map<JixelEvent, String> pendingMessages;
+    private Map<JixelEvent, List<String>> pendingMessages;
 
     protected Thread consumerTask;
 
-    protected Logger logger;
+    //protected Logger logger;
+    protected Logger logger = LoggerFactory.getLogger(Consumer.class);
 
     public Consumer() {
         pendingMessages = new HashMap<>();
@@ -42,21 +41,19 @@ abstract public class Consumer {
         if (!pendingTaskID.isEmpty()) {
             remove(obj);
             listener.ifPresent(l -> l.completeTask(pendingTaskID));
-            logger.info("Completed Task with ID: " + pendingTaskID);
+            logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
         }
     }
 
     public void completeTaskByEvent(JixelEvent obj) {
         String pendingTaskID = getTaskID(obj);
 
-        //Optional<JixelEvent> dd = pendingMessages.keySet().stream()
-        //        .filter(ev ->ev.id() == obj.id()).findAny();
-
-        boolean hasEvent = pendingMessages.keySet().stream().map(x->x.id()).collect(Collectors.toList()).contains(obj.id());
+        boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
         if (hasEvent) {
-            remove(obj);
-            listener.ifPresent(l -> l.completeTask(pendingTaskID));
-            logger.info("Completed Task with ID: " + pendingTaskID);
+            if (remove(obj)) {
+                listener.ifPresent(l -> l.completeTask(pendingTaskID));
+                logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
+            }
         }
     }
 
@@ -66,15 +63,27 @@ abstract public class Consumer {
     }
 
 
-    public String getTaskID(JixelEvent obj) {
-        return pendingMessages.getOrDefault(obj, "");
+    public String getTaskID(JixelEvent evt) {
+        if (pendingMessages.containsKey(evt)) {
+            if (!pendingMessages.get(evt).isEmpty()) {
+                return pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1);
+            }
+        }
+        return "";
     }
 
-    public boolean remove(JixelEvent obj) {
-        String pendingTaskID = pendingMessages.getOrDefault(obj, "");
-        if (!pendingTaskID.isEmpty()) {
-            pendingMessages.remove(obj);
-            return true;
+    public boolean remove(JixelEvent evt) {
+        if (!pendingMessages.containsKey(evt)) {
+            return false;
+        }
+        if (!pendingMessages.get(evt).isEmpty()) {
+            //remove the last
+            pendingMessages.get(evt).remove(pendingMessages.get(evt).size() - 1);
+        }
+        //check for size
+        if (pendingMessages.get(evt).isEmpty()) {
+            pendingMessages.remove(evt);
+            return true; //no more ack, the task can be completed
         }
         return false;
     }
@@ -86,11 +95,14 @@ abstract public class Consumer {
      * is received, we search for the object in the map, get the corresponding task, and complete it
      * to continue the process execution (in completeTask() method).
      *
-     * @param obj    the domain entity to be temporary saved
+     * @param evt    the domain entity to be temporary saved
      * @param taskID the task ID
      */
-    public void save(JixelEvent obj, String taskID) {
-        pendingMessages.put(obj, taskID);
+    public void save(JixelEvent evt, String taskID) {
+        if (!pendingMessages.containsKey(evt)) {
+            pendingMessages.put(evt, new ArrayList<>());
+        }
+        pendingMessages.get(evt).add(taskID);
     }
 
 }

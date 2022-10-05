@@ -324,6 +324,8 @@ public class NettunitService {
         JixelEvent evt = processByEvents.get(processID);
 
         jixelRabbitMQConsumerService.save(evt, taskID);
+        jixelRabbitMQConsumerService.save(evt, taskID);
+        jixelRabbitMQConsumerService.save(evt, taskID);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.MAYOR);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.PREFECT);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
@@ -337,7 +339,11 @@ public class NettunitService {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
+
+
         //...
+
+
         //Wait until Jixel consumes the message to complete the task
         jixelRabbitMQConsumerService.save(evt, taskID);
         // Tell flowable to continue with the WF
@@ -352,14 +358,14 @@ public class NettunitService {
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
 
+        //Wait until Jixel consumes the message to complete the task
+        jixelRabbitMQConsumerService.save(evt, taskID);
+        jixelRabbitMQConsumerService.save(evt, taskID);
+        jixelRabbitMQConsumerService.save(evt, taskID);
+
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
         MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
         MUSAProducer.updateEventDescription(evt, "my description");
-
-        //Wait until Jixel consumes the message to complete the task
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        // Tell flowable to continue with the WF
-        //completeTask(taskID);
     }
 
     public void prepare_tech_report(String taskID) {
@@ -367,21 +373,23 @@ public class NettunitService {
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
 
-        MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
-
         //Wait until Jixel consumes the message to complete the task
         jixelRabbitMQConsumerService.save(evt, taskID);
-        // Tell flowable to continue with the WF
-        //completeTask(taskID);
+
+        MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
     }
 
     public void declare_pre_alert_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
-        //...
+
         //Wait until Jixel consumes the message to complete the task
         jixelRabbitMQConsumerService.save(evt, taskID);
+
+        //...
+
+
         // Tell flowable to continue with the WF
         //completeTask(taskID);
     }
@@ -390,7 +398,9 @@ public class NettunitService {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
+
         //...
+
         //Wait until Jixel consumes the message to complete the task
         jixelRabbitMQConsumerService.save(evt, taskID);
         // Tell flowable to continue with the WF
