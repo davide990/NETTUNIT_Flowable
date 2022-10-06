@@ -1,5 +1,7 @@
 package nettunit.handler.adaptation;
 
+import nettunit.NettunitService;
+import nettunit.SpringContext;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
@@ -14,6 +16,12 @@ public class MUSAOrchestrationHandler implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
+        NettunitService nettunit = SpringContext.getBean(NettunitService.class);
+        String failedTask = nettunit.FailingTaskName.get();
+
+
+
+
         String myName = execution.getCurrentFlowElement().getName();
         String myID = execution.getCurrentFlowElement().getId();
 

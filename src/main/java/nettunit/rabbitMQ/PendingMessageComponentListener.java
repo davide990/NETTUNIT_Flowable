@@ -1,5 +1,7 @@
 package nettunit.rabbitMQ;
 
+import RabbitMQ.JixelEvent;
+
 public interface PendingMessageComponentListener {
-    void completeTask(String taskID);
+    void completeTask(JixelEvent evt, String taskID);
 }

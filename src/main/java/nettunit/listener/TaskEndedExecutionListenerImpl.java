@@ -20,7 +20,7 @@ public class TaskEndedExecutionListenerImpl implements ExecutionListener {
         //TaskListenerService taskListenerService = SpringContext.getBean(TaskListenerService.class);
         //taskListenerService.myFun();
 
-        logger.info("[" + DATE_FORMATTER.format(new Date()) + "]  started/ended task: \"" + myName + "\" with ID: " + myID);
+        logger.info("[" + DATE_FORMATTER.format(new Date()) + "]  ended task: \"" + myName + "\" with ID: " + myID);
     }
 }
 

@@ -40,7 +40,7 @@ abstract public class Consumer {
         String pendingTaskID = getTaskID(obj);
         if (!pendingTaskID.isEmpty()) {
             remove(obj);
-            listener.ifPresent(l -> l.completeTask(pendingTaskID));
+            listener.ifPresent(l -> l.completeTask(obj, pendingTaskID));
             logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
         }
     }
@@ -51,7 +51,7 @@ abstract public class Consumer {
         boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
         if (hasEvent) {
             if (remove(obj)) {
-                listener.ifPresent(l -> l.completeTask(pendingTaskID));
+                listener.ifPresent(l -> l.completeTask(obj, pendingTaskID));
                 logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
             }
         }

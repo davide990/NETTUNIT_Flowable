@@ -120,6 +120,15 @@ public class NettunitController {
     }
 
 
+    /**/
+
+    @PostMapping("/NETTUNIT/fail/{taskName}")
+    public void fail_task(@PathVariable("taskName") String taskName) {
+        nettunitService.failTask(taskName);
+    }
+
+
+
 
 
 }

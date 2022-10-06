@@ -5,6 +5,8 @@ public class JixelDomainInformation {
     public final static String PREFECT = "1";
     public final static String MAYOR = "2";
     public final static String COMMANDER_FIRE_BRIGADE = "3";
+    public final static String ASP = "4";
+    public final static String ARPA = "5";
 
     public final static String URGENCY_LEVEL_IMMEDIATA = "1";
     public final static String URGENCY_LEVEL_FUTURA = "2";

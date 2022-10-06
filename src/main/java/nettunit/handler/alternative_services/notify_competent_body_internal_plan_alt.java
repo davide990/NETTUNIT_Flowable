@@ -1,34 +1,26 @@
-package nettunit.handler;
+package nettunit.handler.alternative_services;
 
 import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
-import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.handler.notify_competent_body_internal_plan;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
-import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class keep_update_involved_personnel implements JavaDelegate {
+public class notify_competent_body_internal_plan_alt implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(keep_update_involved_personnel.class);
+    private static Logger logger = LoggerFactory.getLogger(notify_competent_body_internal_plan.class);
 
     @Override
     public void execute(DelegateExecution execution) {
         JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
-        NettunitService nettunit = SpringContext.getBean(NettunitService.class);
-        if (nettunit.FailingTaskName.isPresent()) {
-            if (nettunit.FailingTaskName.get().equals(this.getClass().getSimpleName())) {
-                throw new BpmnError("SERVICE_FAILED",this.getClass().getSimpleName());
-            }
-        }
         logger.info("Executing capability: " + this.getClass().getSimpleName());
 
 

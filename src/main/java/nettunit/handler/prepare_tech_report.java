@@ -11,13 +11,12 @@ import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class keep_update_involved_personnel implements JavaDelegate {
+public class prepare_tech_report implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(keep_update_involved_personnel.class);
+    private static Logger logger = LoggerFactory.getLogger(notify_competent_body_internal_plan.class);
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -36,8 +35,11 @@ public class keep_update_involved_personnel implements JavaDelegate {
         String taskID = execution.getId();
         jixelRabbitMQConsumerService.save(evt, taskID);
         jixelRabbitMQConsumerService.save(evt, taskID);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+
+        MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
+        MUSAProducer.notifyEvent(evt);
+
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 
         //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
