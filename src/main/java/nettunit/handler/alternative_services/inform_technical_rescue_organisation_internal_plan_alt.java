@@ -1,4 +1,4 @@
-package nettunit.handler;
+package nettunit.handler.alternative_services;
 
 import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
@@ -11,13 +11,23 @@ import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class ensure_presence_of_qualified_personnel implements JavaDelegate {
+public class inform_technical_rescue_organisation_internal_plan_alt implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(ensure_presence_of_qualified_personnel.class);
+    /**
+     * Service that handle the messages that are consumed by Jixel. Please note that this is necessary only for testing
+     * purposes. Once the nettunit platform is deployed, this will not be used as this service will be available from
+     * IES solution.
+     */
+    //@Autowired
+    //private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
+
+    //@Autowired
+    //private MUSAProducerService MUSAProducer;
+
+    private static Logger logger = LoggerFactory.getLogger(inform_technical_rescue_organisation_internal_plan_alt.class);
 
     @Override
     public void execute(DelegateExecution execution) {

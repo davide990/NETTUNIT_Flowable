@@ -402,6 +402,11 @@ public class NettunitService {
     }
 
     public void failTask(String taskName) {
+        logger.warn("Request failure for task ["+taskName+"]");
         FailingTaskName = Optional.of(taskName);
+    }
+
+    public Environment getEnvironment() {
+        return env;
     }
 }

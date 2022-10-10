@@ -25,8 +25,8 @@ public class ensure_presence_of_representative implements JavaDelegate {
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
-            if (nettunit.FailingTaskName.get().equals(this.getClass().getSimpleName())) {
-                throw new BpmnError("SERVICE_FAILED",this.getClass().getSimpleName());
+            if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
+                throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
             }
         }
         logger.info("Executing capability: " + this.getClass().getSimpleName());
