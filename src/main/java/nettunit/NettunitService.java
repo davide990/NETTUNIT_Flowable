@@ -406,6 +406,11 @@ public class NettunitService {
         FailingTaskName = Optional.of(taskName);
     }
 
+    public void undoFailTask(String taskName) {
+        logger.warn("Request undo failure for task ["+taskName+"]");
+        FailingTaskName = Optional.empty();
+    }
+
     public Environment getEnvironment() {
         return env;
     }

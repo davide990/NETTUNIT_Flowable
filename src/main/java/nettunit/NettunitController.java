@@ -125,6 +125,9 @@ public class NettunitController {
     @PostMapping("/NETTUNIT/fail/{taskName}")
     public void fail_task(@PathVariable("taskName") String taskName) { nettunitService.failTask(taskName); }
 
+    @PostMapping("/NETTUNIT/undo_fail/{taskName}")
+    public void undo_fail_task(@PathVariable("taskName") String taskName) { nettunitService.undoFailTask(taskName); }
+
 
 
 

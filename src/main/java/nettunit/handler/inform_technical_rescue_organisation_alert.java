@@ -25,12 +25,6 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
      * purposes. Once the nettunit platform is deployed, this will not be used as this service will be available from
      * IES solution.
      */
-    //@Autowired
-    //private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
-
-    //@Autowired
-    //private MUSAProducerService MUSAProducer;
-
     private static Logger logger = LoggerFactory.getLogger(inform_technical_rescue_organisation_alert.class);
 
     @Override
@@ -40,7 +34,7 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
-                throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
+                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
         logger.info("Executing capability: " + this.getClass().getSimpleName());
@@ -53,6 +47,5 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }
