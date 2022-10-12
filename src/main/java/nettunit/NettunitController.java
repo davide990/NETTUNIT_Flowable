@@ -70,8 +70,6 @@ public class NettunitController {
     }
 
 
-
-
     @GetMapping("/NETTUNIT/incident_list/")
     public List<String> getActiveProcesses() {
         return nettunitService.getActiveProcessesID();
@@ -123,13 +121,19 @@ public class NettunitController {
     /**/
 
     @PostMapping("/NETTUNIT/fail/{taskName}")
-    public void fail_task(@PathVariable("taskName") String taskName) { nettunitService.failTask(taskName); }
+    public void fail_task(@PathVariable("taskName") String taskName) {
+        nettunitService.failTask(taskName);
+    }
 
     @PostMapping("/NETTUNIT/undo_fail/{taskName}")
-    public void undo_fail_task(@PathVariable("taskName") String taskName) { nettunitService.undoFailTask(taskName); }
+    public void undo_fail_task(@PathVariable("taskName") String taskName) {
+        nettunitService.undoFailTask(taskName);
+    }
 
-
-
+    @GetMapping("/NETTUNIT/completed_tasks/{processID}")
+    public List<TaskDetails> get_completed_tasks(@PathVariable("processID") String processID) {
+        return nettunitService.completedTasksByEvents.get(processID);
+    }
 
 
 }
