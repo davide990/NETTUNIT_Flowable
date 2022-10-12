@@ -19,28 +19,6 @@ public class TaskStartedExecutionListenerImpl implements ExecutionListener {
     private static SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private static Logger logger = LoggerFactory.getLogger(TaskStartedExecutionListenerImpl.class);
 
-
-    /**
-     * Return the process instance ID which the input task belongs to.
-     *
-     * @param taskID
-     * @return a process ID
-     */
-    private String getProcessID(String taskID) {
-        TaskService taskService = SpringContext.getBean(TaskService.class);
-
-        //get the tasks
-        List<Task> tasks = taskService.createTaskQuery().list();
-        //get the one which task id matches the input ID
-        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
-        if (tt.isPresent()) {
-            //return the corresponding process ID
-            return tt.get().getProcessInstanceId();
-        }
-        throw new InvalidParameterException("No task found for specified task ID.");
-    }
-
-
     @Override
     public void notify(DelegateExecution execution) {
         String myName = execution.getCurrentFlowElement().getName();

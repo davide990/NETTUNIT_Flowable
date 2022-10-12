@@ -2,6 +2,7 @@ package nettunit.rabbitMQ.ProducerService;
 
 import RabbitMQ.JixelEvent;
 import RabbitMQ.JixelEventReport;
+import RabbitMQ.JixelEventSummary;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Producer.JixelProducer;
 import RabbitMQ.Producer.JixelRabbitMQProducer;
@@ -24,6 +25,11 @@ public class JixelProducerService implements JixelProducer {
     @Override
     public String notifyEvent(JixelEvent event) {
         return Jixel.notifyEvent(event);
+    }
+
+    @Override
+    public String notifyEventSummary(JixelEventSummary event) {
+        return Jixel.notifyEventSummary(event);
     }
 
     @Override

@@ -1,8 +1,7 @@
 package nettunit;
 
-import JixelAPIInterface.Login.LoginToken;
 import RabbitMQ.JixelEvent;
-import RabbitMQ.Producer.JixelProducer;
+import RabbitMQ.JixelEventSummary;
 import Utils.JixelUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -13,7 +12,10 @@ import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.JixelProducerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
-import org.flowable.engine.*;
+import org.flowable.engine.ProcessEngine;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.RuntimeService;
+import org.flowable.engine.TaskService;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntityImpl;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
@@ -25,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import scala.Option;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
 public class NettunitService {
     public static final String JIXEL_EVENT_VAR_NAME = "JixelEvent";
 
-    public Optional<String> FailingTaskName = Optional.empty();
+    public Optional<String> FailingTaskName;
 
     // ID of the process to be deployed
     public static final String PROCESS_DEFINITION_KEY = "NETTUNITProcess";
@@ -66,6 +67,8 @@ public class NettunitService {
      */
     private Map<String, JixelEvent> processByEvents;
 
+    public Map<String, List<TaskDetails>> completedTasksByEvents;
+
 
     /**
      * Service used to produce and send messages from MUSA to Jixel
@@ -76,18 +79,33 @@ public class NettunitService {
     @Autowired
     private JixelProducerService JixelProducer;
 
-    private static Logger logger = LoggerFactory.getLogger(NettunitService.class);
+    private static final Logger logger = LoggerFactory.getLogger(NettunitService.class);
 
     @PostConstruct
     private void postConstruct() {
         processByEvents = new HashMap<>();
+        completedTasksByEvents = new HashMap<>();
+
         jixelRabbitMQConsumerService.setListener((evt, taskID) -> {
             // I set a variable so that I can access the event (at the current state) from service task handlers
             runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
+
+
+            if (!completedTasksByEvents.containsKey(getProcessID(taskID))){
+                completedTasksByEvents.put(getProcessID(taskID), new ArrayList<>());
+            }
+            completedTasksByEvents.get(getProcessID(taskID)).add(new TaskDetails(taskID,
+                    getTaskName(taskID),
+                    getProcessID(taskID),
+                    new HashMap<>()));
+
             // update the event
             processByEvents.put(getProcessID(taskID), evt);
-            // complete the task
+            // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
             taskService.complete(taskID);
+
+            logger.info("Completed Task with ID: " + taskID);
+            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
         });
         processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
     }
@@ -116,11 +134,10 @@ public class NettunitService {
     }
 
     public void deployProcessDefinition() throws IOException {
-        Deployment deployment =
-                repositoryService
-                        .createDeployment()
-                        .addClasspathResource("AttentionPhase_complete.bpmn20.xml")
-                        .deploy();
+        repositoryService
+                .createDeployment()
+                .addClasspathResource("AttentionPhase_complete.bpmn20.xml")
+                .deploy();
     }
 
     /**
@@ -214,7 +231,7 @@ public class NettunitService {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE (event from JIXEL)~~~~~~~~~~~~~");
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("id", incidentEvent.id());
-        variables.put("event_type", incidentEvent.incident_type().description());
+        variables.put("event_type", incidentEvent.description());
         variables.put("caller_name", incidentEvent.caller_name());
 
 
@@ -285,7 +302,19 @@ public class NettunitService {
             //return the corresponding process ID
             return tt.get().getProcessInstanceId();
         }
-        throw new InvalidParameterException("No task found for specified task ID.");
+        throw new InvalidParameterException("No task found with id [" + taskID + "]");
+    }
+
+    private String getTaskName(String taskID) {
+        //get the tasks
+        List<Task> tasks = taskService.createTaskQuery().list();
+        //get the one which task id matches the input ID
+        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        if (tt.isPresent()) {
+            //return the corresponding process ID
+            return tt.get().getName();
+        }
+        throw new InvalidParameterException("No task found with id [" + taskID + "]");
     }
 
     /**
@@ -402,12 +431,12 @@ public class NettunitService {
     }
 
     public void failTask(String taskName) {
-        logger.warn("Request failure for task ["+taskName+"]");
+        logger.warn("Request failure for task [" + taskName + "]");
         FailingTaskName = Optional.of(taskName);
     }
 
     public void undoFailTask(String taskName) {
-        logger.warn("Request undo failure for task ["+taskName+"]");
+        logger.warn("Request undo failure for task [" + taskName + "]");
         FailingTaskName = Optional.empty();
     }
 

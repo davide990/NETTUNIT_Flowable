@@ -1,11 +1,8 @@
 package nettunit.rabbitMQ.ConsumerService;
 
+import RabbitMQ.*;
 import RabbitMQ.Consumer.MUSARabbitMQConsumer;
-import RabbitMQ.JixelEvent;
-import RabbitMQ.JixelEventReport;
-import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.MUSAConsumerListener;
-import RabbitMQ.Recipient;
 import nettunit.NettunitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +33,12 @@ public class MUSARabbitMQConsumerService extends Consumer {
                 public void onNotifyEvent(JixelEvent event) {
                     //TODO here, should I create a new process instance?
                     nettunitService.applyInterventionRequest(event);
+                }
+
+                @Override
+                public void onNotifyEventSummary(JixelEventSummary event) {
+                    //TODO here, should I create a new process instance?
+                    //nettunitService.applyInterventionRequest(event);
                 }
 
                 @Override

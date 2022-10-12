@@ -2,10 +2,13 @@ package nettunit.rabbitMQ.ConsumerService;
 
 import RabbitMQ.Consumer.JixelRabbitMQConsumer;
 import RabbitMQ.JixelEvent;
+import RabbitMQ.JixelEventSummary;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Recipient;
+import Utils.JixelUtil;
 import nettunit.handler.notify_competent_body_internal_plan;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,12 @@ public class JixelRabbitMQConsumerService extends Consumer {
                 @Override
                 public void onCreateEvent(JixelEvent event) {
                     completeTaskByEvent(event);
+                }
+
+                @Override
+                public void onCreateEventSummary(JixelEventSummary event) {
+                    throw new NotImplementedException();
+                    //TODO event from summary
                 }
 
                 @Override

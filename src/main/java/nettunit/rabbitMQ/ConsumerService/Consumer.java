@@ -1,12 +1,14 @@
 package nettunit.rabbitMQ.ConsumerService;
 
 import RabbitMQ.JixelEvent;
+import nettunit.NettunitService;
 import nettunit.handler.notify_competent_body_internal_plan;
 import nettunit.rabbitMQ.PendingMessageComponentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 abstract public class Consumer {
@@ -21,6 +23,9 @@ abstract public class Consumer {
      */
     private Map<JixelEvent, List<String>> pendingMessages;
 
+    //<taskID, latch>
+    private Map<JixelEvent, CountDownLatch> pendingServiceTaskMessages;
+
     protected Thread consumerTask;
 
     //protected Logger logger;
@@ -28,33 +33,31 @@ abstract public class Consumer {
 
     public Consumer() {
         pendingMessages = new HashMap<>();
-    }
-
-    /**
-     * When a message has been consumed by MUSA, related to the object given in input,
-     * then the related task is completed.
-     *
-     * @param obj
-     */
-    public void completeTask(JixelEvent obj) {
-        String pendingTaskID = getTaskID(obj);
-        if (!pendingTaskID.isEmpty()) {
-            remove(obj);
-            listener.ifPresent(l -> l.completeTask(obj, pendingTaskID));
-            logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
-        }
+        pendingServiceTaskMessages = new HashMap<>();
     }
 
     public void completeTaskByEvent(JixelEvent obj) {
-        String pendingTaskID = getTaskID(obj);
-
+        //String pendingTaskID = getTaskID(obj);
         boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
-        if (hasEvent) {
-            if (remove(obj)) {
-                listener.ifPresent(l -> l.completeTask(obj, pendingTaskID));
-                logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + pendingTaskID);
-            }
+        if (!hasEvent) {
+            //maybe it's a service task?
+            completeServiceTaskByEvent(obj);
+            return;
         }
+        Optional<String> taskToComplete = remove(obj);
+        if (taskToComplete.isPresent()) {
+            listener.ifPresent(l -> l.completeTask(obj, taskToComplete.get()));
+            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+        }
+    }
+
+    public void completeServiceTaskByEvent(JixelEvent obj) {
+        boolean hasEvent = pendingServiceTaskMessages.keySet().stream().map(x -> x.id())
+                .collect(Collectors.toList()).contains(obj.id());
+        if (!hasEvent) {
+            return;
+        }
+        pendingServiceTaskMessages.get(obj).countDown();
     }
 
 
@@ -64,28 +67,34 @@ abstract public class Consumer {
 
 
     public String getTaskID(JixelEvent evt) {
+
         if (pendingMessages.containsKey(evt)) {
             if (!pendingMessages.get(evt).isEmpty()) {
+                logger.info("[Consumer] Completed Task(s) for event: " + pendingMessages.get(evt));
                 return pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1);
             }
         }
         return "";
     }
 
-    public boolean remove(JixelEvent evt) {
+    public Optional<String> remove(JixelEvent evt) {
         if (!pendingMessages.containsKey(evt)) {
-            return false;
+            return Optional.empty();
         }
-        if (!pendingMessages.get(evt).isEmpty()) {
-            //remove the last
-            pendingMessages.get(evt).remove(pendingMessages.get(evt).size() - 1);
-        }
-        //check for size
         if (pendingMessages.get(evt).isEmpty()) {
-            pendingMessages.remove(evt);
-            return true; //no more ack, the task can be completed
+            return Optional.empty();
         }
-        return false;
+        //logger.info("[CONSUMER] Removing " + pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1));
+        Optional<String> taskIDToComplete = Optional.of(pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1));
+        pendingMessages.get(evt).remove(pendingMessages.get(evt).size() - 1);
+        if (pendingMessages.get(evt).isEmpty()) {
+            //the task can be completed
+            logger.info("[CONSUMER] Empty queue for event " + evt.id() + "; last elem: " + taskIDToComplete.get());
+            pendingMessages.remove(evt);
+            return taskIDToComplete;
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -99,10 +108,16 @@ abstract public class Consumer {
      * @param taskID the task ID
      */
     public void save(JixelEvent evt, String taskID) {
+        logger.info("[CONSUMER] Awaiting JIXEL ack for user task [" + taskID + "] for evt ID [" + evt.id() + "]");
         if (!pendingMessages.containsKey(evt)) {
             pendingMessages.put(evt, new ArrayList<>());
         }
         pendingMessages.get(evt).add(taskID);
+    }
+
+    public void saveServiceTask(JixelEvent evt, String taskID, CountDownLatch latch, int count) {
+        logger.info("[CONSUMER] Awaiting ack for service task [" + taskID + "] for evt ID [" + evt.id() + "]");
+        pendingServiceTaskMessages.put(evt, new CountDownLatch(count));
     }
 
 }

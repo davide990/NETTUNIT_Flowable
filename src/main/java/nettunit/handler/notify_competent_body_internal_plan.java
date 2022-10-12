@@ -29,13 +29,13 @@ public class notify_competent_body_internal_plan implements JavaDelegate {
                 throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
             }
         }
-        logger.info("Executing capability: " + this.getClass().getSimpleName());
+        logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
 
 
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         String taskID = execution.getId();
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
+        //jixelRabbitMQConsumerService.save(evt, taskID);
+        //jixelRabbitMQConsumerService.save(evt, taskID);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 

@@ -4,14 +4,19 @@ import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.dto.TaskDetails;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
@@ -40,13 +45,11 @@ public class inform_technical_rescue_organisation_internal_plan implements JavaD
                 throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
             }
         }
-        logger.info("Executing capability: " + this.getClass().getSimpleName());
+        logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
 
 
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         String taskID = execution.getId();
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 
