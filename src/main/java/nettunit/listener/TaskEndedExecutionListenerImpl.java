@@ -32,10 +32,12 @@ public class TaskEndedExecutionListenerImpl implements ExecutionListener {
         String taskID = execution.getId();
         String processID = execution.getProcessInstanceId();
         String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-        if (!nettunit.completedTasksByEvents.containsKey(processID)) {
-            nettunit.completedTasksByEvents.put(processID, new ArrayList<>());
+
+
+        if (!nettunit.completedServiceTasksByEvents.containsKey(processID)) {
+            nettunit.completedServiceTasksByEvents.put(processID, new ArrayList<>());
         }
-        nettunit.completedTasksByEvents.get(processID).add(new TaskDetails(taskID,
+        nettunit.completedServiceTasksByEvents.get(processID).add(new TaskDetails(taskID,
                 taskName,
                 processID,
                 new HashMap<>()));

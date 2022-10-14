@@ -1,26 +1,26 @@
 package nettunit;
 
 import RabbitMQ.JixelEvent;
-import RabbitMQ.JixelEventSummary;
-import Utils.JixelUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import nettunit.dto.InterventionRequest;
+import nettunit.dto.ProcessInstanceDetail;
 import nettunit.dto.TaskDetails;
 import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.JixelProducerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
-import org.flowable.engine.ProcessEngine;
-import org.flowable.engine.RepositoryService;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
+import nettunit.util.BPMNToImage;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.engine.*;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntityImpl;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.image.ProcessDiagramGenerator;
+import org.flowable.image.impl.DefaultProcessDiagramGenerator;
 import org.flowable.task.api.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.*;
@@ -41,7 +42,17 @@ import java.util.stream.Collectors;
 public class NettunitService {
     public static final String JIXEL_EVENT_VAR_NAME = "JixelEvent";
 
+    /**
+     * This is the name of task that *will* faill
+     */
     public Optional<String> FailingTaskName;
+
+    /**
+     * Once FailingTaskName has failed, his name is transfered here. BPMN diagram layout listen to this field when
+     * coloring the failed task in red
+     */
+    public Optional<String> FailedTaskName;
+    public Optional<String> FailedTaskImplementation;
 
     // ID of the process to be deployed
     public static final String PROCESS_DEFINITION_KEY = "NETTUNITProcess";
@@ -50,6 +61,8 @@ public class NettunitService {
     ProcessEngine processEngine;
     RepositoryService repositoryService;
     NettunitTaskHistory history;
+
+    ManagementService managementService;
 
     @Autowired
     private Environment env;
@@ -67,7 +80,10 @@ public class NettunitService {
      */
     private Map<String, JixelEvent> processByEvents;
 
-    public Map<String, List<TaskDetails>> completedTasksByEvents;
+    //key -> process instance ID, obtained by getProcessID(taskID)
+    public Map<String, List<TaskDetails>> completedUserTasksByEvents;
+
+    public Map<String, List<TaskDetails>> completedServiceTasksByEvents;
 
 
     /**
@@ -84,25 +100,18 @@ public class NettunitService {
     @PostConstruct
     private void postConstruct() {
         processByEvents = new HashMap<>();
-        completedTasksByEvents = new HashMap<>();
+        completedUserTasksByEvents = new HashMap<>();
+        completedServiceTasksByEvents = new HashMap<>();
+
 
         jixelRabbitMQConsumerService.setListener((evt, taskID) -> {
             // I set a variable so that I can access the event (at the current state) from service task handlers
             runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
-
-
-            if (!completedTasksByEvents.containsKey(getProcessID(taskID))){
-                completedTasksByEvents.put(getProcessID(taskID), new ArrayList<>());
-            }
-            completedTasksByEvents.get(getProcessID(taskID)).add(new TaskDetails(taskID,
-                    getTaskName(taskID),
-                    getProcessID(taskID),
-                    new HashMap<>()));
-
             // update the event
             processByEvents.put(getProcessID(taskID), evt);
             // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
-            taskService.complete(taskID);
+            //taskService.complete(taskID);
+            completeUserTask(taskID);
 
             logger.info("Completed Task with ID: " + taskID);
             //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
@@ -205,8 +214,14 @@ public class NettunitService {
     /**
      * @return
      */
-    public List<ProcessDefinition> getActiveProcesses() {
-        return repositoryService.createProcessDefinitionQuery().active().list();
+    public List<ProcessInstanceDetail> getActiveProcesses() {
+        List<ProcessInstance> inst = runtimeService.createProcessInstanceQuery().active().list();
+        return inst.stream().map(i ->
+                        new ProcessInstanceDetail(i.getProcessDefinitionKey(),
+                                i.getProcessInstanceId(),
+                                i.getProcessDefinitionName(),
+                                i.getProcessDefinitionVersion()))
+                .collect(Collectors.toList());
     }
 
 
@@ -218,6 +233,7 @@ public class NettunitService {
         }
         return processIds;
     }
+
 
     /**
      * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
@@ -234,7 +250,6 @@ public class NettunitService {
         variables.put("event_type", incidentEvent.description());
         variables.put("caller_name", incidentEvent.caller_name());
 
-
         // IMPORTANT
         // note that this is mandatory
         // I replaced the Tee symbol in sequence flow condition with the expression ${myVariable}.
@@ -247,7 +262,6 @@ public class NettunitService {
         //Store the process ID and the event
         processByEvents.put(processInstance.getProcessInstanceId(), incidentEvent);
     }
-
 
     /**
      * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
@@ -358,13 +372,10 @@ public class NettunitService {
 
     public void activate_internal_security_plan(String taskID) {
         // Tell flowable to continue with the WF
-        completeTask(taskID);
+        completeUserTask(taskID);
     }
 
     public void decide_response_type(String taskID) {
-        /*
-        nota: qui Jixel manda l'aggiornamento a MUSA...
-        */
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
@@ -377,16 +388,6 @@ public class NettunitService {
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
         MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
         MUSAProducer.updateEventDescription(evt, "my description");
-    }
-
-    public void prepare_tech_report(String taskID) {
-        //get the ID of the process which the input task belongs to
-        String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-
-        //Wait until Jixel consumes the message to complete the task
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
     }
 
     public void declare_pre_alert_state(String taskID) {
@@ -409,26 +410,31 @@ public class NettunitService {
 
         //...
 
-        //Wait until Jixel consumes the message to complete the task
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        // Tell flowable to continue with the WF
-        completeTask(taskID);
+        completeUserTask(taskID);
     }
 
     public void declare_alarm_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
-        //...
-        //Wait until Jixel consumes the message to complete the task
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        // Tell flowable to continue with the WF
-        completeTask(taskID);
+
+        // do some operation?
+
+        completeUserTask(taskID);
     }
 
-    public void completeTask(String taskID) {
+    public void completeUserTask(String taskID) {
+        if (!completedUserTasksByEvents.containsKey(getProcessID(taskID))) {
+            completedUserTasksByEvents.put(getProcessID(taskID), new ArrayList<>());
+        }
+        completedUserTasksByEvents.get(getProcessID(taskID)).add(new TaskDetails(taskID,
+                getTaskName(taskID),
+                getProcessID(taskID),
+                new HashMap<>()));
+
         taskService.complete(taskID);
     }
+
 
     public void failTask(String taskName) {
         logger.warn("Request failure for task [" + taskName + "]");
@@ -438,7 +444,24 @@ public class NettunitService {
     public void undoFailTask(String taskName) {
         logger.warn("Request undo failure for task [" + taskName + "]");
         FailingTaskName = Optional.empty();
+        FailedTaskName = Optional.empty();
     }
+
+    public BufferedImage getDiagramImage(ProcessInstanceDetail details) {
+        String processInstanceID = details.getProcessInstanceID();
+        String defName = details.getProcessDefinitionName();
+        int ver = details.getProcessDefinitionVersion();
+
+        ProcessDiagramGenerator processDiagramGenerator = new DefaultProcessDiagramGenerator();
+        ProcessDefinition process = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionName(defName)
+                .processDefinitionVersion(ver)
+                .singleResult();
+
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(process.getId());
+        return BPMNToImage.getBPMNDiagramImage(bpmnModel, details);
+    }
+
 
     public Environment getEnvironment() {
         return env;

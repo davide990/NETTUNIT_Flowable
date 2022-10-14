@@ -5,16 +5,15 @@ import nettunit.JixelDomainInformation;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
-import nettunit.rabbitMQ.ProducerService.JixelProducerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Map;
+import java.util.Optional;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
@@ -34,6 +33,10 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
+                String taskName = ((ExecutionEntityImpl) execution).getActivityName();
+                String taskID = execution.getId();
+                nettunit.FailedTaskName = Optional.of(taskName);
+                nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
                 throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }

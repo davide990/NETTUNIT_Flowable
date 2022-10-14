@@ -9,8 +9,11 @@ import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
@@ -25,6 +28,10 @@ public class prepare_tech_report implements JavaDelegate {
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
+                String taskName = ((ExecutionEntityImpl) execution).getActivityName();
+                String taskID = execution.getId();
+                nettunit.FailedTaskName = Optional.of(taskName);
+                nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
                 throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }

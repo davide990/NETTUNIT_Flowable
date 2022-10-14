@@ -2,15 +2,21 @@ package nettunit.handler.adaptation;
 
 import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.dto.TaskDetails;
 import okhttp3.*;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Optional;
 
 public class MUSAOrchestrationHandler implements JavaDelegate {
     private static SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -36,6 +42,19 @@ public class MUSAOrchestrationHandler implements JavaDelegate {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        logger.info("[" + DATE_FORMATTER.format(new Date()) + "] Sent adaptivity request to MUSA.");
+
+        String taskID = execution.getId();
+        String processID = execution.getProcessInstanceId();
+        String taskName = ((ExecutionEntityImpl) execution).getActivityName();
+
+        if (!nettunit.completedServiceTasksByEvents.containsKey(processID)) {
+            nettunit.completedServiceTasksByEvents.put(processID, new ArrayList<>());
+        }
+        nettunit.completedServiceTasksByEvents.get(processID).add(new TaskDetails(taskID,
+                taskName,
+                processID,
+                new HashMap<>()));
+
+        logger.info("[" + DATE_FORMATTER.format(new Date()) + "-ADAPTATION TASK] Sent adaptivity request to MUSA.");
     }
 }
