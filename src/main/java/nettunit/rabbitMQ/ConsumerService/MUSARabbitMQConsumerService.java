@@ -3,7 +3,7 @@ package nettunit.rabbitMQ.ConsumerService;
 import RabbitMQ.*;
 import RabbitMQ.Consumer.MUSARabbitMQConsumer;
 import RabbitMQ.Listener.MUSAConsumerListener;
-import nettunit.NettunitService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import scala.Some;
@@ -15,8 +15,8 @@ public class MUSARabbitMQConsumerService extends Consumer {
 
     private static MUSARabbitMQConsumer consumer = new MUSARabbitMQConsumer();
 
-    @Autowired
-    NettunitService nettunitService;
+//    @Autowired
+//    NettunitService nettunitService;
 
     @Autowired
     public MUSARabbitMQConsumerService() {
@@ -32,27 +32,30 @@ public class MUSARabbitMQConsumerService extends Consumer {
                 @Override
                 public void onNotifyEvent(JixelEvent event) {
                     //TODO here, should I create a new process instance?
-                    nettunitService.applyInterventionRequest(event);
+                    //nettunitService.applyInterventionRequest(event);
+                    applyInterventionRequest(event);
                 }
 
                 @Override
                 public void onNotifyEventSummary(JixelEventSummary event) {
                     //TODO here, should I create a new process instance?
                     //nettunitService.applyInterventionRequest(event);
+
                 }
 
                 @Override
                 public void onEventUpdate(JixelEventUpdate update) {
-                    //Check for the activity requiring an update
+                    completeTaskByEvent(update.event());
                 }
 
                 @Override
                 public void onReceiveJixelReport(JixelEventReport report) {
-                    //Check for the activity requiring a report
+                    completeTaskByEvent(report.event());
                 }
 
                 @Override
                 public void onAddRecipient(Recipient r) {
+                    completeTaskByEvent(r.event());
 
                 }
             }));

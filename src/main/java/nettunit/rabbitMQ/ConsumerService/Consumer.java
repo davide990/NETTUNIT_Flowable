@@ -36,6 +36,10 @@ abstract public class Consumer {
         pendingServiceTaskMessages = new HashMap<>();
     }
 
+    public void applyInterventionRequest(JixelEvent evt){
+        listener.ifPresent(l->l.applyInterventionRequest(evt));
+    }
+
     public void completeTaskByEvent(JixelEvent obj) {
         //String pendingTaskID = getTaskID(obj);
         boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());

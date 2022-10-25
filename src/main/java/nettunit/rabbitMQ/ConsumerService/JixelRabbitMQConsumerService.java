@@ -6,18 +6,13 @@ import RabbitMQ.JixelEventSummary;
 import RabbitMQ.JixelEventUpdate;
 import RabbitMQ.Listener.JixelConsumerListener;
 import RabbitMQ.Recipient;
-import Utils.JixelUtil;
-import nettunit.handler.notify_competent_body_internal_plan;
-import org.apache.commons.lang3.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import scala.Some;
 
 import javax.annotation.PostConstruct;
 
-@Service
+//@Service
 /**
  * This service handles the Jixel consumer service. Specifically, it serves as a listener for knowing when a message
  * sent by musa (through a specific capability) is consumed by the recipient.
@@ -40,7 +35,7 @@ public class JixelRabbitMQConsumerService extends Consumer {
 
                 @Override
                 public void onCreateEventSummary(JixelEventSummary event) {
-                    throw new NotImplementedException();
+
                     //TODO event from summary
                 }
 

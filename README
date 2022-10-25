@@ -1,0 +1,5 @@
+# Nettunit workflow engine
+
+To generate an executable jar file, use the following maven goal:
+
+> mvn package spring-boot:repackage

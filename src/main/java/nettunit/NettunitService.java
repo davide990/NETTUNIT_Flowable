@@ -9,6 +9,8 @@ import nettunit.dto.ProcessInstanceDetail;
 import nettunit.dto.TaskDetails;
 import nettunit.persistence.NettunitTaskHistory;
 import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
+import nettunit.rabbitMQ.ConsumerService.MUSARabbitMQConsumerService;
+import nettunit.rabbitMQ.PendingMessageComponentListener;
 import nettunit.rabbitMQ.ProducerService.JixelProducerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import nettunit.util.BPMNToImage;
@@ -72,8 +74,11 @@ public class NettunitService {
      * purposes. Once the nettunit platform is deployed, this will not be used as this service will be available from
      * IES solution.
      */
+    //@Autowired
+    //private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
+
     @Autowired
-    private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
+    private MUSARabbitMQConsumerService MUSARabbitMQConsumerService;
 
     /**
      * This map associates the incidental events to process IDs.
@@ -92,10 +97,12 @@ public class NettunitService {
     @Autowired
     private MUSAProducerService MUSAProducer;
 
-    @Autowired
-    private JixelProducerService JixelProducer;
+    //@Autowired
+    //private JixelProducerService JixelProducer;
 
     private static final Logger logger = LoggerFactory.getLogger(NettunitService.class);
+
+    private static boolean deployment = false;
 
     @PostConstruct
     private void postConstruct() {
@@ -103,20 +110,46 @@ public class NettunitService {
         completedUserTasksByEvents = new HashMap<>();
         completedServiceTasksByEvents = new HashMap<>();
 
-
-        jixelRabbitMQConsumerService.setListener((evt, taskID) -> {
-            // I set a variable so that I can access the event (at the current state) from service task handlers
-            runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
-            // update the event
-            processByEvents.put(getProcessID(taskID), evt);
-            // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
-            //taskService.complete(taskID);
-            completeUserTask(taskID);
-
-            logger.info("Completed Task with ID: " + taskID);
-            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
-        });
         processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
+        deployment = Boolean.parseBoolean(env.getProperty("deployment_flag"));
+
+        if (deployment)
+            MUSARabbitMQConsumerService.setListener(new PendingMessageComponentListener() {
+                @Override
+                public void completeTask(JixelEvent evt, String taskID) {
+                    onCompleteTask(evt, taskID);
+                }
+
+                @Override
+                public void applyInterventionRequest(JixelEvent evt) {
+                    NettunitService nettunit = SpringContext.getBean(NettunitService.class);
+                    nettunit.applyInterventionRequest(evt);
+                }
+            });
+        /*else
+            jixelRabbitMQConsumerService.setListener(new PendingMessageComponentListener() {
+                @Override
+                public void completeTask(JixelEvent evt, String taskID) {
+                    onCompleteTask(evt, taskID);
+                }
+
+                @Override
+                public void applyInterventionRequest(JixelEvent evt) {
+                    NettunitService nettunit = SpringContext.getBean(NettunitService.class);
+                    nettunit.applyInterventionRequest(evt);
+                }
+            });*/
+    }
+
+    private void onCompleteTask(JixelEvent evt, String taskID) {
+        // I set a variable so that I can access the event (at the current state) from service task handlers
+        runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
+        // update the event
+        processByEvents.put(getProcessID(taskID), evt);
+        // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
+        //taskService.complete(taskID);
+        completeUserTask(taskID);
+        logger.info("Completed Task with ID: " + taskID);
     }
 
     /**
@@ -362,9 +395,16 @@ public class NettunitService {
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
 
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        } /*else {
+            jixelRabbitMQConsumerService.save(evt, taskID);
+            jixelRabbitMQConsumerService.save(evt, taskID);
+            jixelRabbitMQConsumerService.save(evt, taskID);
+        }*/
+
         MUSAProducer.addRecipient(evt, JixelDomainInformation.MAYOR);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.PREFECT);
         MUSAProducer.addRecipient(evt, JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
@@ -381,9 +421,15 @@ public class NettunitService {
         JixelEvent evt = processByEvents.get(processID);
 
         //Wait until Jixel consumes the message to complete the task
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        }/* else {
+            jixelRabbitMQConsumerService.save(evt, taskID);
+            jixelRabbitMQConsumerService.save(evt, taskID);
+            jixelRabbitMQConsumerService.save(evt, taskID);
+        }*/
 
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
         MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
@@ -396,11 +442,15 @@ public class NettunitService {
         JixelEvent evt = processByEvents.get(processID);
 
         //Wait until Jixel consumes the message to complete the task
-        jixelRabbitMQConsumerService.save(evt, taskID);
-        jixelRabbitMQConsumerService.save(evt, taskID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        } /*else {
+            jixelRabbitMQConsumerService.save(evt, taskID);
+            jixelRabbitMQConsumerService.save(evt, taskID);
+        }*/
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
-
     }
 
     public void evaluate_fire_radiant_energy(String taskID) {
