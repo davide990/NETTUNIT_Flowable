@@ -408,26 +408,24 @@ public class NettunitService {
 
         if (deployment) {
             MUSARabbitMQConsumerService.save(evt, taskID);
-            //MUSARabbitMQConsumerService.save(evt, taskID);
-            //MUSARabbitMQConsumerService.save(evt, taskID);
-        } /*else {
-            jixelRabbitMQConsumerService.save(evt, taskID);
-            jixelRabbitMQConsumerService.save(evt, taskID);
-            jixelRabbitMQConsumerService.save(evt, taskID);
-        }*/
-
+        }
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.MAYOR);
         recipients.addOne(JixelDomainInformation.PREFECT);
         recipients.addOne(JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
         MUSAProducer.addRecipient(evt, recipients.toList());
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.PREFECT);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
     }
 
     public void activate_internal_security_plan(String taskID) {
-        // Tell flowable to continue with the WF
-        completeUserTask(taskID);
+        String processID = getProcessID(taskID);
+        JixelEvent evt = processByEvents.get(processID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        }
+        MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
+        MUSAProducer.updateEventDescription(evt, "Internal Plan Activated");
+        //completeUserTask(taskID);
     }
 
     public void decide_response_type(String taskID) {
@@ -440,15 +438,13 @@ public class NettunitService {
             MUSARabbitMQConsumerService.save(evt, taskID);
             MUSARabbitMQConsumerService.save(evt, taskID);
             MUSARabbitMQConsumerService.save(evt, taskID);
-        }/* else {
-            jixelRabbitMQConsumerService.save(evt, taskID);
-            jixelRabbitMQConsumerService.save(evt, taskID);
-            jixelRabbitMQConsumerService.save(evt, taskID);
-        }*/
-
+        }
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
         MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
         MUSAProducer.updateEventDescription(evt, "my description");
+
+
+        //runtimeService.deleteProcessInstance();
     }
 
     public void declare_pre_alert_state(String taskID) {
@@ -459,33 +455,33 @@ public class NettunitService {
         //Wait until Jixel consumes the message to complete the task
         if (deployment) {
             MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
-        } /*else {
-            jixelRabbitMQConsumerService.save(evt, taskID);
-            jixelRabbitMQConsumerService.save(evt, taskID);
-        }*/
+        }
         MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
-        MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
+        //MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
     }
 
     public void evaluate_fire_radiant_energy(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
-
-        //...
-
-        completeUserTask(taskID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        }
+        MUSAProducer.updateEventDescription(evt, "Fire radiant energy evaluated");
+        //completeUserTask(taskID);
     }
 
     public void declare_alarm_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
         JixelEvent evt = processByEvents.get(processID);
-
-        // do some operation?
-
-        completeUserTask(taskID);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt, taskID);
+        }
+        MUSAProducer.updateEventDescription(evt, "Alarm state declared");
+        MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_FUTURA);
+        //completeUserTask(taskID);
     }
 
     public void completeUserTask(String taskID) {
@@ -513,18 +509,18 @@ public class NettunitService {
     }
 
     public BufferedImage getDiagramImage(ProcessInstanceDetail details) {
-        String processInstanceID = details.getProcessInstanceID();
         String defName = details.getProcessDefinitionName();
         int ver = details.getProcessDefinitionVersion();
-
-        ProcessDiagramGenerator processDiagramGenerator = new DefaultProcessDiagramGenerator();
         ProcessDefinition process = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionName(defName)
                 .processDefinitionVersion(ver)
                 .singleResult();
-
         BpmnModel bpmnModel = repositoryService.getBpmnModel(process.getId());
         return BPMNToImage.getBPMNDiagramImage(bpmnModel, details);
+    }
+
+    public void removeProcessInstance(String processID) {
+        runtimeService.deleteProcessInstance(processID, "REMOVED BY USER");
     }
 
 

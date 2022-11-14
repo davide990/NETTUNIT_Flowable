@@ -43,6 +43,13 @@ public class NettunitController {
         nettunitService.deployProcessDefinition(processID, processDef);
     }
 
+    @PostMapping("/NETTUNIT/removeProcessInstance/{processID}")
+    public void removeProcessInstance(@PathVariable("processID") String processID) {
+        nettunitService.removeProcessInstance(processID);
+    }
+
+
+
     /**
      * This endpoint is used to tell this nettunit/flowable module the mapping between
      * service task names and their classes.
