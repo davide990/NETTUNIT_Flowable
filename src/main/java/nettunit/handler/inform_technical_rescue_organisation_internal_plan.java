@@ -41,24 +41,16 @@ public class inform_technical_rescue_organisation_internal_plan implements JavaD
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
                 String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-                String taskID = execution.getId();
                 nettunit.FailedTaskName = Optional.of(taskName);
                 nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
-                throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
+                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
-        logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
-
-
-        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+        logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         MUSAProducer.addRecipient(evt, recipients.toList());
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

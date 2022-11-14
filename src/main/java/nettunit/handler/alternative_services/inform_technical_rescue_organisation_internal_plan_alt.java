@@ -22,11 +22,6 @@ public class inform_technical_rescue_organisation_internal_plan_alt implements J
      * purposes. Once the nettunit platform is deployed, this will not be used as this service will be available from
      * IES solution.
      */
-    //@Autowired
-    //private JixelRabbitMQConsumerService jixelRabbitMQConsumerService;
-
-    //@Autowired
-    //private MUSAProducerService MUSAProducer;
 
     private static Logger logger = LoggerFactory.getLogger(inform_technical_rescue_organisation_internal_plan_alt.class);
 
@@ -37,25 +32,15 @@ public class inform_technical_rescue_organisation_internal_plan_alt implements J
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
-                throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
+                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
         logger.info("Executing capability: " + this.getClass().getSimpleName());
 
-
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        //String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
         MUSAProducer.addRecipient(evt, recipients.toList());
-
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

@@ -30,7 +30,6 @@ public class ensure_presence_of_representative_alt implements JavaDelegate {
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
                 String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-                String taskID = execution.getId();
                 nettunit.FailedTaskName = Optional.of(taskName);
                 nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
                 throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
@@ -38,18 +37,10 @@ public class ensure_presence_of_representative_alt implements JavaDelegate {
         }
         logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
 
-
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
         MUSAProducer.addRecipient(evt, recipients.toList());
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

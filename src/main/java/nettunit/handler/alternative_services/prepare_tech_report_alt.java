@@ -38,18 +38,7 @@ public class prepare_tech_report_alt implements JavaDelegate {
             }
         }
         logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
-
-
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-
         MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
-        //MUSAProducer.notifyEvent(evt);
-
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

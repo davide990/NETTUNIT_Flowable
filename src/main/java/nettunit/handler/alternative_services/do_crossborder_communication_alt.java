@@ -24,7 +24,6 @@ public class do_crossborder_communication_alt implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        //JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
@@ -36,20 +35,11 @@ public class do_crossborder_communication_alt implements JavaDelegate {
                 throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
-
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
-
-        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        //String taskID = execution.getId();
-
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         MUSAProducer.addRecipient(evt, recipients.toList());
-
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

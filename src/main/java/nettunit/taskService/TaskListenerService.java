@@ -18,8 +18,8 @@ public class TaskListenerService {
 
     //TODO to implement
     public void myFun() {
-        myList.add(33);
-        System.out.println(myList.stream().map(x -> Integer.toString(x)).collect(Collectors.joining(", ")).toString());
+        //myList.add(33);
+        //System.out.println(myList.stream().map(x -> Integer.toString(x)).collect(Collectors.joining(", ")).toString());
     }
 
 }

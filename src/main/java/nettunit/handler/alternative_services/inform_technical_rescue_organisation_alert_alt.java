@@ -43,19 +43,11 @@ public class inform_technical_rescue_organisation_alert_alt implements JavaDeleg
         }
         logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
 
-
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
         MUSAProducer.addRecipient(evt, recipients.toList());
-
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 
     }
 }

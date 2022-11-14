@@ -29,25 +29,13 @@ public class prepare_tech_report implements JavaDelegate {
         if (nettunit.FailingTaskName.isPresent()) {
             if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
                 String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-                String taskID = execution.getId();
                 nettunit.FailedTaskName = Optional.of(taskName);
                 nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
                 throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
-        logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
-
-
+        logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-
         MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
-        //MUSAProducer.notifyEvent(evt);
-
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

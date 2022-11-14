@@ -33,23 +33,15 @@ public class keep_update_involved_personnel implements JavaDelegate {
                 String taskID = execution.getId();
                 nettunit.FailedTaskName = Optional.of(taskName);
                 nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
-                throw new BpmnError("REQUIRE_ORCHESTRATION",this.getClass().getName());
+                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
             }
         }
-        logger.info("Executing capability ["+execution.getId()+"]: " + this.getClass().getSimpleName());
+        logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
 
-
-        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        String taskID = execution.getId();
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //jixelRabbitMQConsumerService.save(evt, taskID);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.ASP);
         recipients.addOne(JixelDomainInformation.ARPA);
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         MUSAProducer.addRecipient(evt, recipients.toList());
-
-        //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

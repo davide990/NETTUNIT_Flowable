@@ -24,8 +24,8 @@ public class TaskStartedExecutionListenerImpl implements ExecutionListener {
         String myName = execution.getCurrentFlowElement().getName();
         String myID = execution.getId();
 
-        TaskListenerService taskListenerService = SpringContext.getBean(TaskListenerService.class);
-        taskListenerService.myFun();
+        //TaskListenerService taskListenerService = SpringContext.getBean(TaskListenerService.class);
+        //taskListenerService.myFun();
 
         logger.info("[" + DATE_FORMATTER.format(new Date()) + "]  started task: \"" + myName + "\" with ID: " + myID);
     }

@@ -31,7 +31,7 @@ public class MUSAOrchestrationHandler implements JavaDelegate {
 
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("text/plain");
-        // The body of the POST request contains the name of the service which failed its execution
+        // The body of the POST request contains the full name of the failing service
         RequestBody body = RequestBody.create(failedTask, mediaType);
         Request request = new Request.Builder()
                 .url("http://" + MUSAAddress + ":" + MUSAPort + "/FailCapability")
@@ -42,11 +42,11 @@ public class MUSAOrchestrationHandler implements JavaDelegate {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         String taskID = execution.getId();
         String processID = execution.getProcessInstanceId();
         String taskName = ((ExecutionEntityImpl) execution).getActivityName();
 
+        // Tell flowable that the adaptation task has finished its execution
         if (!nettunit.completedServiceTasksByEvents.containsKey(processID)) {
             nettunit.completedServiceTasksByEvents.put(processID, new ArrayList<>());
         }
