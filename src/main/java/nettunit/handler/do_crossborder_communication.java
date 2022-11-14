@@ -12,6 +12,7 @@ import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
 
@@ -23,7 +24,7 @@ public class do_crossborder_communication implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
+
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
@@ -41,9 +42,12 @@ public class do_crossborder_communication implements JavaDelegate {
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         //String taskID = execution.getId();
 
-
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.ASP);
+        recipients.addOne(JixelDomainInformation.ARPA);
+        MUSAProducer.addRecipient(evt, recipients.toList());
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 
         //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }

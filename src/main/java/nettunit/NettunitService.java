@@ -30,6 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import scala.collection.JavaConverters.*;
+import scala.collection.mutable.ArrayBuffer;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.awt.image.BufferedImage;
@@ -279,9 +282,17 @@ public class NettunitService {
     public void applyInterventionRequest(JixelEvent incidentEvent) {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE (event from JIXEL)~~~~~~~~~~~~~");
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("id", incidentEvent.id());
-        variables.put("event_type", incidentEvent.description());
-        variables.put("caller_name", incidentEvent.caller_name());
+
+        int id = incidentEvent.id();
+        String evt_type = incidentEvent.description();
+        String caller_name = "";
+        if (incidentEvent.caller_name().isDefined()) {
+            caller_name = incidentEvent.caller_name().get();
+        }
+
+        variables.put("id", id);
+        variables.put("event_type", evt_type);
+        variables.put("caller_name", caller_name);
 
         // IMPORTANT
         // note that this is mandatory
@@ -397,17 +408,21 @@ public class NettunitService {
 
         if (deployment) {
             MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
+            //MUSARabbitMQConsumerService.save(evt, taskID);
+            //MUSARabbitMQConsumerService.save(evt, taskID);
         } /*else {
             jixelRabbitMQConsumerService.save(evt, taskID);
             jixelRabbitMQConsumerService.save(evt, taskID);
             jixelRabbitMQConsumerService.save(evt, taskID);
         }*/
 
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.MAYOR);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.PREFECT);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.MAYOR);
+        recipients.addOne(JixelDomainInformation.PREFECT);
+        recipients.addOne(JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
+        MUSAProducer.addRecipient(evt, recipients.toList());
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.PREFECT);
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
     }
 
     public void activate_internal_security_plan(String taskID) {

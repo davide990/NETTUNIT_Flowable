@@ -4,6 +4,7 @@ import RabbitMQ.*;
 import RabbitMQ.Consumer.MUSARabbitMQConsumer;
 import RabbitMQ.Listener.MUSAConsumerListener;
 
+import Utils.JixelUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import scala.Some;
@@ -40,7 +41,6 @@ public class MUSARabbitMQConsumerService extends Consumer {
                 public void onNotifyEventSummary(JixelEventSummary event) {
                     //TODO here, should I create a new process instance?
                     //nettunitService.applyInterventionRequest(event);
-
                 }
 
                 @Override
@@ -56,7 +56,41 @@ public class MUSARabbitMQConsumerService extends Consumer {
                 @Override
                 public void onAddRecipient(Recipient r) {
                     completeTaskByEvent(r.event());
+                }
 
+                @Override
+                public void onJixelAckAddRecipient(JixelAckAddRecipient msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckUrgencyLevel(JixelAckUrgencyLevel msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckEventSeverity(JixelAckEventSeverity msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckEventTypology(JixelAckEventTypology msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckEventDescription(JixelAckEventDescription msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckUpdateCommType(JixelAckUpdateCommType msg) {
+                    completeTaskByEvent(msg.data().incident_id());
+                }
+
+                @Override
+                public void onJixelAckUpdateCommTypeError(JixelAckUpdateCommTypeError msg) {
+                    completeTaskByEvent(msg.data().incident_id());
                 }
             }));
         });

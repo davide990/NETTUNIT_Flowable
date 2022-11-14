@@ -23,7 +23,7 @@ public class prepare_tech_report implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
+
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
@@ -44,7 +44,7 @@ public class prepare_tech_report implements JavaDelegate {
         //jixelRabbitMQConsumerService.save(evt, taskID);
 
         MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
-        MUSAProducer.notifyEvent(evt);
+        //MUSAProducer.notifyEvent(evt);
 
         //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 

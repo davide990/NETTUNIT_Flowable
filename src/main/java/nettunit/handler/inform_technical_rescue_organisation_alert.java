@@ -12,6 +12,7 @@ import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
 
     @Override
     public void execute(DelegateExecution execution) {
-        JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
+
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
@@ -47,8 +48,12 @@ public class inform_technical_rescue_organisation_alert implements JavaDelegate 
         String taskID = execution.getId();
         //jixelRabbitMQConsumerService.save(evt, taskID);
         //jixelRabbitMQConsumerService.save(evt, taskID);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.ASP);
+        recipients.addOne(JixelDomainInformation.ARPA);
+        MUSAProducer.addRecipient(evt, recipients.toList());
 
     }
 }

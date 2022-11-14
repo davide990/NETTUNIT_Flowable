@@ -13,6 +13,7 @@ import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
 
@@ -24,7 +25,7 @@ public class prepare_tech_report_alt implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
+
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {
@@ -45,7 +46,7 @@ public class prepare_tech_report_alt implements JavaDelegate {
         //jixelRabbitMQConsumerService.save(evt, taskID);
 
         MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
-        MUSAProducer.notifyEvent(evt);
+        //MUSAProducer.notifyEvent(evt);
 
         //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
 

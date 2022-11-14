@@ -10,6 +10,7 @@ import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.mutable.ArrayBuffer;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
@@ -19,7 +20,7 @@ public class notify_competent_body_internal_plan_alt implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        JixelRabbitMQConsumerService jixelRabbitMQConsumerService = SpringContext.getBean(JixelRabbitMQConsumerService.class);
+
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         logger.info("Executing capability: " + this.getClass().getSimpleName());
 
@@ -28,9 +29,12 @@ public class notify_competent_body_internal_plan_alt implements JavaDelegate {
         String taskID = execution.getId();
         //jixelRabbitMQConsumerService.save(evt, taskID);
         //jixelRabbitMQConsumerService.save(evt, taskID);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
-        MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
-
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ASP);
+        //MUSAProducer.addRecipient(evt, JixelDomainInformation.ARPA);
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.ASP);
+        recipients.addOne(JixelDomainInformation.ARPA);
+        MUSAProducer.addRecipient(evt, recipients.toList());
         //throw new BpmnError("REQUIRE_ORCHESTRATION");
     }
 }

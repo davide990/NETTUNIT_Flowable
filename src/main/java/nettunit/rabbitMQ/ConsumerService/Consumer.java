@@ -40,6 +40,24 @@ abstract public class Consumer {
         listener.ifPresent(l->l.applyInterventionRequest(evt));
     }
 
+    public void completeTaskByEvent(int incidentID) {
+        //String pendingTaskID = getTaskID(obj);
+
+        Optional<JixelEvent> obj = pendingMessages.keySet().stream().filter(ev->ev.id()==incidentID).findFirst();
+        boolean hasEvent = obj.isPresent();
+        //boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
+        if (!hasEvent) {
+            //maybe it's a service task?
+            completeServiceTaskByEvent(obj.get());
+            return;
+        }
+        Optional<String> taskToComplete = remove(obj.get());
+        if (taskToComplete.isPresent()) {
+            listener.ifPresent(l -> l.completeTask(obj.get(), taskToComplete.get()));
+            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+        }
+    }
+
     public void completeTaskByEvent(JixelEvent obj) {
         //String pendingTaskID = getTaskID(obj);
         boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
