@@ -6,13 +6,17 @@ import lombok.experimental.FieldDefaults;
 import nettunit.dto.InterventionRequest;
 import nettunit.dto.ProcessInstanceDetail;
 import nettunit.dto.TaskDetails;
+import nettunit.handler.ensure_presence_of_qualified_personnel;
 import org.flowable.engine.runtime.ProcessInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.*;
 
 /**
@@ -24,7 +28,7 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class NettunitController {
-
+    private static Logger logger = LoggerFactory.getLogger(NettunitController.class);
     NettunitService nettunitService;
 
     //********************************************************** deployment endpoints **********************************************************
@@ -47,7 +51,6 @@ public class NettunitController {
     public void removeProcessInstance(@PathVariable("processID") String processID) {
         nettunitService.removeProcessInstance(processID);
     }
-
 
 
     /**
@@ -115,10 +118,10 @@ public class NettunitController {
     @GetMapping("/NETTUNIT/completed_tasks/{processID}")
     public List<TaskDetails> get_completed_tasks(@PathVariable("processID") String processID) {
         List<TaskDetails> allCompletedTasks = new ArrayList<>();
-        if (nettunitService.completedUserTasksByEvents.containsKey(processID)){
+        if (nettunitService.completedUserTasksByEvents.containsKey(processID)) {
             allCompletedTasks.addAll(nettunitService.completedUserTasksByEvents.get(processID));
         }
-        if (nettunitService.completedServiceTasksByEvents.containsKey(processID)){
+        if (nettunitService.completedServiceTasksByEvents.containsKey(processID)) {
             allCompletedTasks.addAll(nettunitService.completedServiceTasksByEvents.get(processID));
         }
 
@@ -153,32 +156,56 @@ public class NettunitController {
 
     @PostMapping("/NETTUNIT/safety_manager/send_team_to_evaluate/{taskID}")
     public void send_team_to_evaluate(@PathVariable("taskID") String taskID) {
-        nettunitService.send_team_to_evaluate(taskID);
+        try {
+            nettunitService.send_team_to_evaluate(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
 
     @PostMapping("/NETTUNIT/plant_operator/activate_internal_security_plan/{taskID}")
     public void activate_internal_security_plan(@PathVariable("taskID") String taskID) {
-        nettunitService.activate_internal_security_plan(taskID);
+        try {
+            nettunitService.activate_internal_security_plan(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
 
     @PostMapping("/NETTUNIT/commander_fire_brigade/decide_response_type/{taskID}")
     public void decide_response_type(@PathVariable("taskID") String taskID) {
-        nettunitService.decide_response_type(taskID);
+        try {
+            nettunitService.decide_response_type(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
 
     @PostMapping("/NETTUNIT/prefect/declare_pre_alert_state/{taskID}")
     public void declare_pre_alert_state(@PathVariable("taskID") String taskID) {
-        nettunitService.declare_pre_alert_state(taskID);
+        try {
+            nettunitService.declare_pre_alert_state(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
 
     @PostMapping("/NETTUNIT/ARPA/evaluate_fire_radiant_energy/{taskID}")
     public void evaluate_fire_radiant_energy(@PathVariable("taskID") String taskID) {
-        nettunitService.evaluate_fire_radiant_energy(taskID);
+        try {
+            nettunitService.evaluate_fire_radiant_energy(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
 
     @PostMapping("/NETTUNIT/prefect/declare_alarm_state/{taskID}")
     public void declare_alarm_state(@PathVariable("taskID") String taskID) {
-        nettunitService.declare_alarm_state(taskID);
+        try {
+            nettunitService.declare_alarm_state(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
     }
     //******************************************************************************************************************
     //******************************************************************************************************************

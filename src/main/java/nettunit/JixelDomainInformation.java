@@ -2,11 +2,11 @@ package nettunit;
 
 public class JixelDomainInformation {
 
-    public final static int PREFECT = 1;
-    public final static int MAYOR = 2;
-    public final static int COMMANDER_FIRE_BRIGADE = 3;
-    public final static int ASP = 4;
-    public final static int ARPA = 5;
+    public final static int PREFECT = 72;
+    public final static int MAYOR = 72;
+    public final static int COMMANDER_FIRE_BRIGADE = 72;
+    public final static int ASP = 72;
+    public final static int ARPA = 72;
 
     public final static int URGENCY_LEVEL_IMMEDIATA = 1;
     public final static int URGENCY_LEVEL_FUTURA = 2;
