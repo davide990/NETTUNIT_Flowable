@@ -100,6 +100,11 @@ public class NettunitController {
         return nettunitService.getActiveProcesses();
     }
 
+    @GetMapping("/NETTUNIT/terminated_incident_list/")
+    public List<ProcessInstanceDetail> getTerminatedProcessesNew() {
+        return nettunitService.getTerminatedProcesses();
+    }
+
     /**
      * Simulate task failure
      *
@@ -209,6 +214,12 @@ public class NettunitController {
     }
     //******************************************************************************************************************
     //******************************************************************************************************************
+
+
+    @GetMapping("/NETTUNIT/pending_messages/{taskID}")
+    public int getPendingMessagesCount(@PathVariable("taskID") String taskID) {
+        return 0;//nettunitService.getPendingMessagesCount(taskID);
+    }
 
 
 }

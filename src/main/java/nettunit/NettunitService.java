@@ -16,7 +16,9 @@ import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import nettunit.util.BPMNToImage;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.*;
+import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntityImpl;
+import org.flowable.engine.impl.persistence.entity.HistoricProcessInstanceEntityImpl;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -66,6 +68,8 @@ public class NettunitService {
     ProcessEngine processEngine;
     RepositoryService repositoryService;
     NettunitTaskHistory history;
+
+    HistoryService historyService;
 
     ManagementService managementService;
 
@@ -252,11 +256,24 @@ public class NettunitService {
      */
     public List<ProcessInstanceDetail> getActiveProcesses() {
         List<ProcessInstance> inst = runtimeService.createProcessInstanceQuery().active().list();
+
         return inst.stream().map(i ->
                         new ProcessInstanceDetail(i.getProcessDefinitionKey(),
                                 i.getProcessInstanceId(),
                                 i.getProcessDefinitionName(),
                                 i.getProcessDefinitionVersion()))
+                .collect(Collectors.toList());
+    }
+
+    public List<ProcessInstanceDetail> getTerminatedProcesses() {
+        List<HistoricProcessInstance> inst = historyService.createHistoricProcessInstanceQuery().finished().list();
+        return inst.stream()
+                .map(i -> (HistoricProcessInstanceEntityImpl) i)
+                .map(is -> new ProcessInstanceDetail(Optional.ofNullable(is.getProcessDefinitionKey()).orElse(""),
+                        Optional.ofNullable(is.getProcessInstanceId()).orElse(""),
+                        Optional.ofNullable(is.getProcessDefinitionName()).orElse(""),
+                        Optional.ofNullable(is.getProcessDefinitionVersion()).orElse(-1)))
+                .filter(ii-> ii.getProcessDefinitionName().equals("CrossBorderEmergencyPlan"))
                 .collect(Collectors.toList());
     }
 
@@ -318,6 +335,7 @@ public class NettunitService {
      */
     public void applyInterventionRequest(InterventionRequest processInstanceRequest) {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE~~~~~~~~~~~~~");
+        logger.info("Request: " + processInstanceRequest);
         Map<String, Object> variables = new HashMap<>();
         variables.put("description", processInstanceRequest.getRequestDescription());
 
@@ -340,9 +358,7 @@ public class NettunitService {
     private List<TaskDetails> getTasksByRole(String role) {
         List<Task> tasks =
                 taskService.createTaskQuery().taskCandidateGroup(role).list();
-        List<TaskDetails> taskDetails = getTaskDetails(tasks);
-
-        return taskDetails;
+        return getTaskDetails(tasks);
     }
 
     /**
@@ -369,7 +385,6 @@ public class NettunitService {
         //get the one which task id matches the input ID
         Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
         if (tt.isPresent()) {
-            //return the corresponding process ID
             return tt.get().getName();
         }
         throw new InvalidParameterException("No task found with id [" + taskID + "]");
@@ -404,44 +419,54 @@ public class NettunitService {
     public void send_team_to_evaluate(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
+        }
         if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
         }
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.MAYOR);
         recipients.addOne(JixelDomainInformation.PREFECT);
         recipients.addOne(JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
-        MUSAProducer.addRecipient(evt, recipients.toList());
+        MUSAProducer.addRecipient(evt.get(), recipients.toList());
     }
 
     public void activate_internal_security_plan(String taskID) {
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-        if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
         }
-        MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
-        MUSAProducer.updateEventDescription(evt, "Internal Plan Activated");
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+        }
+        MUSAProducer.updateEventSeverity(evt.get(), JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
+        MUSAProducer.updateEventDescription(evt.get(), "Internal Plan Activated");
         //completeUserTask(taskID);
     }
 
     public void decide_response_type(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
+        }
         //Wait until Jixel consumes the message to complete the task
         if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
         }
-        MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
-        MUSAProducer.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
-        MUSAProducer.updateEventDescription(evt, "my description");
+        MUSAProducer.updateUrgencyLevel(evt.get(), JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
+        MUSAProducer.updateEventSeverity(evt.get(), JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
+        MUSAProducer.updateEventDescription(evt.get(), "my description");
 
 
         //runtimeService.deleteProcessInstance();
@@ -450,37 +475,47 @@ public class NettunitService {
     public void declare_pre_alert_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
+        }
         //Wait until Jixel consumes the message to complete the task
         if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
         }
-        MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
-        //MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
+        MUSAProducer.updateUrgencyLevel(evt.get(), JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
     }
 
     public void evaluate_fire_radiant_energy(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-        if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
         }
-        MUSAProducer.updateEventDescription(evt, "Fire radiant energy evaluated");
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+        }
+        MUSAProducer.updateEventDescription(evt.get(), "Fire radiant energy evaluated");
         //completeUserTask(taskID);
     }
 
     public void declare_alarm_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        JixelEvent evt = processByEvents.get(processID);
-        if (deployment) {
-            MUSARabbitMQConsumerService.save(evt, taskID);
-            MUSARabbitMQConsumerService.save(evt, taskID);
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
         }
-        MUSAProducer.updateEventDescription(evt, "Alarm state declared");
-        MUSAProducer.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_FUTURA);
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+        }
+        MUSAProducer.updateEventDescription(evt.get(), "Alarm state declared");
+        MUSAProducer.updateUrgencyLevel(evt.get(), JixelDomainInformation.URGENCY_LEVEL_FUTURA);
         //completeUserTask(taskID);
     }
 
@@ -526,5 +561,14 @@ public class NettunitService {
 
     public Environment getEnvironment() {
         return env;
+    }
+
+    public int getPendingMessagesCount(String taskID) {
+        String processID = getProcessID(taskID);
+        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            return 0;
+        }
+        return MUSARabbitMQConsumerService.getNumberOfPendingMessages(evt.get().id());
     }
 }

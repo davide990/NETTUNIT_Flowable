@@ -62,9 +62,7 @@ public class BPMNToImage {
 
         try {
             mxGraphToPdfFile(graph, fname);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (DocumentException e) {
+        } catch (FileNotFoundException | DocumentException e) {
             throw new RuntimeException(e);
         }
     }

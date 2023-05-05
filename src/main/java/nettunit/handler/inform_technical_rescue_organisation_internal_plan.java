@@ -35,7 +35,6 @@ public class inform_technical_rescue_organisation_internal_plan implements JavaD
 
     @Override
     public void execute(DelegateExecution execution) {
-
         MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
         if (nettunit.FailingTaskName.isPresent()) {

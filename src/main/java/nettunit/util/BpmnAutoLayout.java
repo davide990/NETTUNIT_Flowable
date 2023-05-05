@@ -241,11 +241,11 @@ public class BpmnAutoLayout {
         String activityColor = taskColor;
         if (flowElement.getName().equals(failedTaskName) && ((ServiceTask) flowElement).getImplementation().equals(failedTaskImplementation)) {
             activityColor = failedTaskColor;
-        } else if (this.availableTasks.stream().filter(t -> t.getTaskName().equals(flowElement.getName())).findAny().isPresent()) {
+        } else if (this.availableTasks.stream().anyMatch(t -> t.getTaskName().equals(flowElement.getName()))) {
             activityColor = pendingTaskColor;
-        } else if (this.completedServiceTasks.stream().filter(t -> t.getTaskName().equals(flowElement.getName())).findAny().isPresent()) {
+        } else if (this.completedServiceTasks.stream().anyMatch(t -> t.getTaskName().equals(flowElement.getName()))) {
             activityColor = completedServiceTaskColor;
-        } else if (this.completedUserTasks.stream().filter(t -> t.getTaskName().equals(flowElement.getName())).findAny().isPresent()) {
+        } else if (this.completedUserTasks.stream().anyMatch(t -> t.getTaskName().equals(flowElement.getName()))) {
             activityColor = completedUserTaskColor;
         }
 

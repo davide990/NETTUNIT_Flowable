@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 
 import scala.collection.immutable.List;
 
-
-
 @Service
 public class MUSAProducerService implements MUSAProducer {
     private static Logger logger = LoggerFactory.getLogger(MUSAProducerService.class);
@@ -23,38 +21,8 @@ public class MUSAProducerService implements MUSAProducer {
         MUSA = new MUSARabbitMQProducer();
     }
 
-    /*
-    @Override
-    public String notifyEvent(JixelEvent event) {
-        return MUSA.notifyEvent(event);
-    }
-
-    @Override
-    public String addRecipient(JixelEvent ev, String recipient) {
-        return MUSA.addRecipient(ev, recipient);
-    }
-
-    @Override
-    public String updateUrgencyLevel(JixelEvent ev, String level) {
-        return MUSA.updateUrgencyLevel(ev, level);
-    }
-
-    @Override
-    public String updateEventSeverity(JixelEvent ev, String severity) {
-        return MUSA.updateEventSeverity(ev, severity);
-    }
-
-    @Override
-    public String updateEventTypology(JixelEvent ev, String typology) {
-        return MUSA.updateEventTypology(ev, typology);
-    }
-*/
-
-
     @Override
     public String addRecipient(JixelEvent ev, List<Object> actors_id) {
-        //ArrayBuffer a = new ArrayBuffer<>();
-        //a.toList()
         return MUSA.addRecipient(ev, actors_id);
     }
 

@@ -36,14 +36,14 @@ abstract public class Consumer {
         pendingServiceTaskMessages = new HashMap<>();
     }
 
-    public void applyInterventionRequest(JixelEvent evt){
-        listener.ifPresent(l->l.applyInterventionRequest(evt));
+    public void applyInterventionRequest(JixelEvent evt) {
+        listener.ifPresent(l -> l.applyInterventionRequest(evt));
     }
 
     public void completeTaskByEvent(int incidentID) {
         //String pendingTaskID = getTaskID(obj);
 
-        Optional<JixelEvent> obj = pendingMessages.keySet().stream().filter(ev->ev.id()==incidentID).findFirst();
+        Optional<JixelEvent> obj = pendingMessages.keySet().stream().filter(ev -> ev.id() == incidentID).findFirst();
         boolean hasEvent = obj.isPresent();
         //boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
         if (!hasEvent) {
@@ -140,6 +140,11 @@ abstract public class Consumer {
     public void saveServiceTask(JixelEvent evt, String taskID, CountDownLatch latch, int count) {
         logger.info("[CONSUMER] Awaiting ack for service task [" + taskID + "] for evt ID [" + evt.id() + "]");
         pendingServiceTaskMessages.put(evt, new CountDownLatch(count));
+    }
+
+    public int getNumberOfPendingMessages(int jixelEventID) {
+        Optional<JixelEvent> evt = pendingMessages.keySet().stream().filter(k -> k.id() == jixelEventID).findFirst();
+        return evt.map(jixelEvent -> pendingMessages.get(jixelEvent).size()).orElse(0);
     }
 
 }
