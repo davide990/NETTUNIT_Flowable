@@ -42,5 +42,9 @@ public class do_crossborder_communication implements JavaDelegate {
         recipients.addOne(JixelDomainInformation.ARPA);
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         MUSAProducer.addRecipient(evt, recipients.toList());
+
+
+        //TODO
+        // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
     }
 }

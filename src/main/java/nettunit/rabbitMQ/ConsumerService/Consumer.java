@@ -54,7 +54,7 @@ abstract public class Consumer {
         Optional<String> taskToComplete = remove(obj.get());
         if (taskToComplete.isPresent()) {
             listener.ifPresent(l -> l.completeTask(obj.get(), taskToComplete.get()));
-            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+            logger.info("[JIXEL EVENT ID " + obj.get().id() + "] Completed Task with ID: " + taskToComplete.get());
         }
     }
 

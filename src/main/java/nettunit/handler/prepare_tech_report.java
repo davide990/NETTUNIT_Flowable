@@ -37,5 +37,6 @@ public class prepare_tech_report implements JavaDelegate {
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
         MUSAProducer.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
+
     }
 }
