@@ -38,6 +38,12 @@ public class ask_for_airborne_dispersion_estimate implements JavaDelegate {
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         nettunit.currentTask = Optional.of(this.getClass().getName());
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
+
+
+
+
+        System.out.println("here");
         //TODO
         // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
     }

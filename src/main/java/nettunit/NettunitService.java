@@ -316,6 +316,7 @@ public class NettunitService {
         variables.put("id", id);
         variables.put("event_type", evt_type);
         variables.put("caller_name", caller_name);
+        variables.put(JIXEL_EVENT_VAR_NAME,incidentEvent);
 
         // IMPORTANT
         // note that this is mandatory
