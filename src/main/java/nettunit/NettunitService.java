@@ -50,6 +50,12 @@ public class NettunitService {
     public static final String JIXEL_EVENT_VAR_NAME = "JixelEvent";
 
     /**
+     * Contains the name of the current task. This is used to trace the execution and, in case of
+     * adaptation, this value is sent to MUSA in case of an adaptivity request.
+     */
+    public Optional<String> currentTask;
+
+    /**
      * This is the name of task that *will* faill
      */
     public Optional<String> FailingTaskName;
@@ -273,7 +279,7 @@ public class NettunitService {
                         Optional.ofNullable(is.getProcessInstanceId()).orElse(""),
                         Optional.ofNullable(is.getProcessDefinitionName()).orElse(""),
                         Optional.ofNullable(is.getProcessDefinitionVersion()).orElse(-1)))
-                .filter(ii-> ii.getProcessDefinitionName().equals("CrossBorderEmergencyPlan"))
+                .filter(ii -> ii.getProcessDefinitionName().equals("CrossBorderEmergencyPlan"))
                 .collect(Collectors.toList());
     }
 

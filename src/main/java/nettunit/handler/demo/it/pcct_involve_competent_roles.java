@@ -37,12 +37,7 @@ public class pcct_involve_competent_roles implements JavaDelegate {
         }
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
-        ArrayBuffer recipients = new ArrayBuffer<>();
-        recipients.addOne(JixelDomainInformation.ASP);
-        recipients.addOne(JixelDomainInformation.ARPA);
-        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        MUSAProducer.addRecipient(evt, recipients.toList());
-
+        nettunit.currentTask = Optional.of(this.getClass().getName());
 
         //TODO
         // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
