@@ -42,8 +42,6 @@ public class ask_for_airborne_dispersion_estimate implements JavaDelegate {
 
 
 
-
-        System.out.println("here");
         //TODO
         // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
     }

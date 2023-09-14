@@ -35,7 +35,6 @@ public class JixelRabbitMQConsumerService extends Consumer {
 
                 @Override
                 public void onCreateEventSummary(JixelEventSummary event) {
-
                     //TODO event from summary
                 }
 

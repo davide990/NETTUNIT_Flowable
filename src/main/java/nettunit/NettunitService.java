@@ -4,16 +4,16 @@ import RabbitMQ.JixelEvent;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import nettunit.MUSA.StateOfWorldUpdateOp;
 import nettunit.dto.InterventionRequest;
 import nettunit.dto.ProcessInstanceDetail;
 import nettunit.dto.TaskDetails;
 import nettunit.persistence.NettunitTaskHistory;
-import nettunit.rabbitMQ.ConsumerService.JixelRabbitMQConsumerService;
 import nettunit.rabbitMQ.ConsumerService.MUSARabbitMQConsumerService;
 import nettunit.rabbitMQ.PendingMessageComponentListener;
-import nettunit.rabbitMQ.ProducerService.JixelProducerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import nettunit.util.BPMNToImage;
+import okhttp3.*;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.*;
 import org.flowable.engine.history.HistoricProcessInstance;
@@ -22,9 +22,9 @@ import org.flowable.engine.impl.persistence.entity.HistoricProcessInstanceEntity
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.ActivityInstance;
+import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.image.ProcessDiagramGenerator;
-import org.flowable.image.impl.DefaultProcessDiagramGenerator;
 import org.flowable.task.api.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import scala.collection.JavaConverters.*;
 import scala.collection.mutable.ArrayBuffer;
 
 import javax.annotation.PostConstruct;
@@ -68,7 +67,7 @@ public class NettunitService {
     public Optional<String> FailedTaskImplementation;
 
     // ID of the process to be deployed
-    public static final String PROCESS_DEFINITION_KEY = "NETTUNITProcess";
+    public static final String PROCESS_DEFINITION_KEY = "emg_it";//"NETTUNITProcess";
     RuntimeService runtimeService;
     TaskService taskService;
     ProcessEngine processEngine;
@@ -78,6 +77,7 @@ public class NettunitService {
     HistoryService historyService;
 
     ManagementService managementService;
+
 
     @Autowired
     private Environment env;
@@ -96,10 +96,10 @@ public class NettunitService {
     /**
      * This map associates the incidental events to process IDs.
      */
-    private Map<String, JixelEvent> processByEvents;
+    private Map<JixelEvent, String> processByEvents;
 
     //key -> process instance ID, obtained by getProcessID(taskID)
-    public Map<String, List<TaskDetails>> completedUserTasksByEvents;
+    public Map<JixelEvent, List<TaskDetails>> completedUserTasksByEvents;
 
     public Map<String, List<TaskDetails>> completedServiceTasksByEvents;
 
@@ -123,8 +123,19 @@ public class NettunitService {
         completedUserTasksByEvents = new HashMap<>();
         completedServiceTasksByEvents = new HashMap<>();
 
+
         processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
+        processEngine.getProcessEngineConfiguration().setAsyncExecutorActivate(true);
+        //processEngine.getProcessEngineConfiguration().setDefaultFailedJobWaitTime(5);
+        processEngine.getProcessEngineConfiguration().setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        //processEngine.getProcessEngineConfiguration().setAsyncHistoryExecutorActivate(true);
+
+        //.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE)
+        //                .setAsyncExecutorActivate(true)
+
         deployment = Boolean.parseBoolean(env.getProperty("deployment_flag"));
+
+        //asyncExecutorActivate
 
         if (deployment)
             MUSARabbitMQConsumerService.setListener(new PendingMessageComponentListener() {
@@ -139,29 +150,29 @@ public class NettunitService {
                     nettunit.applyInterventionRequest(evt);
                 }
             });
-        /*else
-            jixelRabbitMQConsumerService.setListener(new PendingMessageComponentListener() {
-                @Override
-                public void completeTask(JixelEvent evt, String taskID) {
-                    onCompleteTask(evt, taskID);
-                }
+        //else
+        /*JixelProducer.setListener(new PendingMessageComponentListener() {
+            @Override
+            public void completeTask(JixelEvent evt, String taskID) {
+                onCompleteTask(evt, taskID);
+            }
 
-                @Override
-                public void applyInterventionRequest(JixelEvent evt) {
-                    NettunitService nettunit = SpringContext.getBean(NettunitService.class);
-                    nettunit.applyInterventionRequest(evt);
-                }
-            });*/
+            @Override
+            public void applyInterventionRequest(JixelEvent evt) {
+                NettunitService nettunit = SpringContext.getBean(NettunitService.class);
+                nettunit.applyInterventionRequest(evt);
+            }
+        });*/
     }
 
     private void onCompleteTask(JixelEvent evt, String taskID) {
         // I set a variable so that I can access the event (at the current state) from service task handlers
         runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
         // update the event
-        processByEvents.put(getProcessID(taskID), evt);
+        processByEvents.put(evt, getProcessID(taskID));
         // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
         //taskService.complete(taskID);
-        completeUserTask(taskID);
+        completeUserTask(evt, taskID);
         logger.info("Completed Task with ID: " + taskID);
     }
 
@@ -194,6 +205,35 @@ public class NettunitService {
                 .addClasspathResource("AttentionPhase_complete.bpmn20.xml")
                 .deploy();
     }
+
+    /**
+     * Communicate to musa that
+     *
+     * @param opType
+     * @param predicate
+     * @param taskFullName
+     */
+    public void updateMUSAStateOfWorld(StateOfWorldUpdateOp opType, String predicate, String taskFullName) {
+        String MUSAAddress = getEnvironment().getProperty("nettunit.musa.address");
+        String MUSAPort = getEnvironment().getProperty("nettunit.musa.port");
+
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        MediaType mediaType = MediaType.parse("text/plain");
+
+        String theString = opType + "|" + predicate + "|" + taskFullName;
+
+        RequestBody body = RequestBody.create(theString, mediaType);
+        Request request = new Request.Builder()
+                .url("http://" + MUSAAddress + ":" + MUSAPort + "/UpdateStateOfWorld")
+                .method("POST", body)
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     /**
      * This is used when deployment and execution are invoked from MUSA
@@ -293,6 +333,9 @@ public class NettunitService {
         return processIds;
     }
 
+    public void applyInterventionRequest(JixelEvent incidentEvent) {
+        applyInterventionRequest(incidentEvent, PROCESS_DEFINITION_KEY);
+    }
 
     /**
      * Entry point for the emergency plan. This operation creates a new instance of the emegency plan.
@@ -302,8 +345,11 @@ public class NettunitService {
      * @param incidentEvent
      * @return
      */
-    public void applyInterventionRequest(JixelEvent incidentEvent) {
+    public void applyInterventionRequest(JixelEvent incidentEvent, String processDefinitionKey) {
         logger.info("~~~~~~~~~~~~~CREATING NEW PLAN INSTANCE (event from JIXEL)~~~~~~~~~~~~~");
+        logger.info(" ~~~~~~ Jixel event id: " + incidentEvent.id());
+        logger.info(" ~~~~~~ Jixel caller: " + incidentEvent.caller_name());
+        logger.info(" ~~~~~~ Process instance: " + processDefinitionKey);
         Map<String, Object> variables = new HashMap<String, Object>();
 
         int id = incidentEvent.id();
@@ -316,7 +362,7 @@ public class NettunitService {
         variables.put("id", id);
         variables.put("event_type", evt_type);
         variables.put("caller_name", caller_name);
-        variables.put(JIXEL_EVENT_VAR_NAME,incidentEvent);
+        variables.put(JIXEL_EVENT_VAR_NAME, incidentEvent);
 
         // IMPORTANT
         // note that this is mandatory
@@ -325,10 +371,10 @@ public class NettunitService {
         variables.put("myVariable", true);
 
         ProcessInstance processInstance =
-                runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, variables);
+                runtimeService.startProcessInstanceByKey(processDefinitionKey, variables);
 
         //Store the process ID and the event
-        processByEvents.put(processInstance.getProcessInstanceId(), incidentEvent);
+        processByEvents.put(incidentEvent, processInstance.getProcessInstanceId());
     }
 
     /**
@@ -377,22 +423,30 @@ public class NettunitService {
     private String getProcessID(String taskID) {
         //get the tasks
         List<Task> tasks = taskService.createTaskQuery().list();
+
+        Optional<ActivityInstance> ee = runtimeService.createActivityInstanceQuery().list().stream()
+                .filter(t -> t.getActivityId().equals(taskID)).findFirst();
+
+
         //get the one which task id matches the input ID
-        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
-        if (tt.isPresent()) {
+        //Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        if (ee.isPresent()) {  //if (tt.isPresent()) {
             //return the corresponding process ID
-            return tt.get().getProcessInstanceId();
+            return ee.get().getProcessInstanceId();
         }
         throw new InvalidParameterException("No task found with id [" + taskID + "]");
     }
 
     private String getTaskName(String taskID) {
         //get the tasks
-        List<Task> tasks = taskService.createTaskQuery().list();
+        //List<Task> tasks = taskService.createTaskQuery().list();
+        Optional<ActivityInstance> ee = runtimeService.createActivityInstanceQuery().list().stream()
+                .filter(t -> t.getActivityId().equals(taskID)).findFirst();
+
         //get the one which task id matches the input ID
-        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
-        if (tt.isPresent()) {
-            return tt.get().getName();
+        //Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        if (ee.isPresent()) {
+            return ee.get().getActivityName();//.getName();
         }
         throw new InvalidParameterException("No task found with id [" + taskID + "]");
     }
@@ -426,7 +480,7 @@ public class NettunitService {
     public void send_team_to_evaluate(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -443,7 +497,7 @@ public class NettunitService {
 
     public void activate_internal_security_plan(String taskID) {
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -460,7 +514,7 @@ public class NettunitService {
     public void decide_response_type(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -482,7 +536,7 @@ public class NettunitService {
     public void declare_pre_alert_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -497,7 +551,7 @@ public class NettunitService {
     public void evaluate_fire_radiant_energy(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -512,7 +566,7 @@ public class NettunitService {
     public void declare_alarm_state(String taskID) {
         //get the ID of the process which the input task belongs to
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             logger.error("No event found for task [" + taskID + "]");
             return;
@@ -526,16 +580,53 @@ public class NettunitService {
         //completeUserTask(taskID);
     }
 
-    public void completeUserTask(String taskID) {
-        if (!completedUserTasksByEvents.containsKey(getProcessID(taskID))) {
-            completedUserTasksByEvents.put(getProcessID(taskID), new ArrayList<>());
+    public void completeUserTask(JixelEvent evt, String taskID) {
+        if (!completedUserTasksByEvents.containsKey(evt)) {
+            completedUserTasksByEvents.put(evt, new ArrayList<>());
         }
-        completedUserTasksByEvents.get(getProcessID(taskID)).add(new TaskDetails(taskID,
+        completedUserTasksByEvents.get(evt).add(new TaskDetails(taskID,
                 getTaskName(taskID),
                 getProcessID(taskID),
                 new HashMap<>()));
 
-        taskService.complete(taskID);
+
+        // in your case only one execution is selected
+        List<Execution> executions = runtimeService.createExecutionQuery().onlyChildExecutions()
+                .processInstanceId(processByEvents.get(evt)).list();
+// activityId is id from the modeler. Can be any wait state (user task, async service task, receive task.....)
+         List<String> activityIds = executions.stream().map(Execution::getActivityId).collect(Collectors.toList());
+
+
+        Optional<Execution> execution = Optional.ofNullable(this.runtimeService.createExecutionQuery()
+                .processInstanceId(processByEvents.get(evt))
+                .activityId(taskID)
+                .singleResult());
+
+        Task task = this.taskService.createTaskQuery()
+                .processInstanceId(processByEvents.get(evt))
+                .taskId(taskID)
+                .singleResult();
+
+        if (execution.isPresent()) {
+            this.runtimeService.trigger(execution.get().getId());
+        } else {
+            logger.error("No execution found for taskID: " + taskID);
+        }
+        //                .activityId(getTaskName(taskID))
+        /*Task task = this.taskService.createTaskQuery()
+                .processInstanceId(processByEvents.get(evt))
+                //.taskName(getTaskName(taskID))
+                .taskId(execution.getId())
+                .singleResult();*/
+
+        // Trigger the service task.
+        //this.runtimeService.trigger(execution.getId());
+
+
+
+
+        // Complete the user task
+        //this.taskService.complete(task.getId());
     }
 
 
@@ -572,10 +663,32 @@ public class NettunitService {
 
     public int getPendingMessagesCount(String taskID) {
         String processID = getProcessID(taskID);
-        Optional<JixelEvent> evt = Optional.ofNullable(processByEvents.get(processID));
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
         if (evt.isEmpty()) {
             return 0;
         }
         return MUSARabbitMQConsumerService.getNumberOfPendingMessages(evt.get().id());
+    }
+
+    public void inform_involved_local_authorities(String taskID) {
+        //get the ID of the process which the input task belongs to
+        String processID = getProcessID(taskID);
+        Optional<JixelEvent> evt = Optional.empty();//Optional.ofNullable(processByEvents.get(processID));
+        if (evt.isEmpty()) {
+            logger.error("No event found for task [" + taskID + "]");
+            return;
+        }
+        if (deployment) {
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+            MUSARabbitMQConsumerService.save(evt.get(), taskID);
+        }
+
+        MUSAProducer.updateEventDescription(evt.get(), "inform_involved_local_authorities");
+        MUSAProducer.updateUrgencyLevel(evt.get(), JixelDomainInformation.URGENCY_LEVEL_FUTURA);
+        //completeUserTask(taskID);
+    }
+
+    public ManagementService getManagementService() {
+        return managementService;
     }
 }

@@ -222,4 +222,15 @@ public class NettunitController {
     }
 
 
+    //********//
+    @PostMapping("/NETTUNIT/demo/inform_involved_local_authorities/{taskID}")
+    public void identifying_incident(@PathVariable("taskID") String taskID){
+        try {
+            nettunitService.inform_involved_local_authorities(taskID);
+        } catch (InvalidParameterException ex) {
+            logger.warn("No task found with id [" + taskID + "]");
+        }
+    }
+
+
 }

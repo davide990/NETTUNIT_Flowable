@@ -2,9 +2,12 @@ package nettunit.handler.demo.it;
 
 import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
+import nettunit.MUSA.StateOfWorldUpdateOp;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.TimeConstraint.TSHandler;
 import nettunit.handler.do_crossborder_communication;
+import nettunit.rabbitMQ.ConsumerService.MUSARabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -15,12 +18,13 @@ import org.slf4j.LoggerFactory;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
 public class comune_decide_response_type implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(do_crossborder_communication.class);
+    private static Logger logger = LoggerFactory.getLogger(comune_decide_response_type.class);
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -38,7 +42,6 @@ public class comune_decide_response_type implements JavaDelegate {
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         nettunit.currentTask = Optional.of(this.getClass().getName());
-        //TODO
-        // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
     }
 }

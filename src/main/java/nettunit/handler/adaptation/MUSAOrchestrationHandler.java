@@ -25,7 +25,11 @@ public class MUSAOrchestrationHandler implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) {
         NettunitService nettunit = SpringContext.getBean(NettunitService.class);
-        String failedTask = nettunit.FailingTaskName.get();
+
+        //String failedTask = nettunit.FailedTaskImplementation.get();
+        String failedTask = nettunit.FailedTaskImplementation.get();
+
+
         String MUSAAddress = nettunit.getEnvironment().getProperty("nettunit.musa.address");
         String MUSAPort = nettunit.getEnvironment().getProperty("nettunit.musa.port");
 

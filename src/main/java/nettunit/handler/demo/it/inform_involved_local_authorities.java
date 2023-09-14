@@ -5,6 +5,7 @@ import nettunit.JixelDomainInformation;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
 import nettunit.handler.do_crossborder_communication;
+import nettunit.rabbitMQ.ConsumerService.MUSARabbitMQConsumerService;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -12,15 +13,17 @@ import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
 public class inform_involved_local_authorities implements JavaDelegate {
 
-    private static Logger logger = LoggerFactory.getLogger(do_crossborder_communication.class);
+    private static Logger logger = LoggerFactory.getLogger(inform_involved_local_authorities.class);
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -38,8 +41,6 @@ public class inform_involved_local_authorities implements JavaDelegate {
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         nettunit.currentTask = Optional.of(this.getClass().getName());
-
-        //TODO
-        // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
     }
 }

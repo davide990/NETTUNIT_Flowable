@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
@@ -21,9 +22,9 @@ abstract public class Consumer {
      * until the message has been acknowledged from destination actor. Once acknowledged, the activity
      * of the process that provided the communication is completed
      */
+    //private Map<JixelEvent, List<String>> pendingMessages;
     private Map<JixelEvent, List<String>> pendingMessages;
 
-    //<taskID, latch>
     private Map<JixelEvent, CountDownLatch> pendingServiceTaskMessages;
 
     protected Thread consumerTask;
@@ -41,11 +42,8 @@ abstract public class Consumer {
     }
 
     public void completeTaskByEvent(int incidentID) {
-        //String pendingTaskID = getTaskID(obj);
-
         Optional<JixelEvent> obj = pendingMessages.keySet().stream().filter(ev -> ev.id() == incidentID).findFirst();
         boolean hasEvent = obj.isPresent();
-        //boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
         if (!hasEvent) {
             //maybe it's a service task?
             completeServiceTaskByEvent(obj.get());
@@ -59,7 +57,6 @@ abstract public class Consumer {
     }
 
     public void completeTaskByEvent(JixelEvent obj) {
-        //String pendingTaskID = getTaskID(obj);
         boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
         if (!hasEvent) {
             //maybe it's a service task?
@@ -69,7 +66,7 @@ abstract public class Consumer {
         Optional<String> taskToComplete = remove(obj);
         if (taskToComplete.isPresent()) {
             listener.ifPresent(l -> l.completeTask(obj, taskToComplete.get()));
-            //logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+            logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
         }
     }
 
@@ -137,9 +134,9 @@ abstract public class Consumer {
         pendingMessages.get(evt).add(taskID);
     }
 
-    public void saveServiceTask(JixelEvent evt, String taskID, CountDownLatch latch, int count) {
+    public void saveServiceTask(JixelEvent evt, String taskID, CountDownLatch latch) {
         logger.info("[CONSUMER] Awaiting ack for service task [" + taskID + "] for evt ID [" + evt.id() + "]");
-        pendingServiceTaskMessages.put(evt, new CountDownLatch(count));
+        pendingServiceTaskMessages.put(evt, latch);
     }
 
     public int getNumberOfPendingMessages(int jixelEventID) {
