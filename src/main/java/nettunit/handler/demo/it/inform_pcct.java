@@ -4,7 +4,6 @@ import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
 import nettunit.MUSA.StateOfWorldUpdateOp;
 import nettunit.handler.base.BaseHandler;
-import nettunit.handler.do_crossborder_communication;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.delegate.TriggerableActivityBehavior;
@@ -14,13 +13,12 @@ import org.slf4j.LoggerFactory;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class inform_involved_local_authorities extends BaseHandler implements TriggerableActivityBehavior {
+public class inform_pcct extends BaseHandler implements TriggerableActivityBehavior {
 
-    private static Logger logger = LoggerFactory.getLogger(inform_involved_local_authorities.class);
+    private static Logger logger = LoggerFactory.getLogger(inform_pcct.class);
 
     String evolution_predicate = "involved_local_authorities";
 
@@ -45,8 +43,7 @@ public class inform_involved_local_authorities extends BaseHandler implements Tr
         String taskID = ((ExecutionEntityImpl) execution).getActivityId();
 
         ArrayBuffer recipients = new ArrayBuffer<>();
-        recipients.addOne(JixelDomainInformation.COMUNE_PACHINO);
-        recipients.addOne(JixelDomainInformation.COMUNE_GELA);
+        recipients.addOne(JixelDomainInformation.PCCT);
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
         musaService.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
