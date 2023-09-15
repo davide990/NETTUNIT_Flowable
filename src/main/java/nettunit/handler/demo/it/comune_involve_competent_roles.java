@@ -4,6 +4,7 @@ import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.handler.base.BaseHandler;
 import nettunit.handler.do_crossborder_communication;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
@@ -18,28 +19,43 @@ import java.util.Optional;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class comune_involve_competent_roles implements JavaDelegate {
+public class comune_involve_competent_roles extends BaseHandler {
 
-    private static Logger logger = LoggerFactory.getLogger(do_crossborder_communication.class);
+    private static Logger logger = LoggerFactory.getLogger(comune_involve_competent_roles.class);
 
     @Override
     public void execute(DelegateExecution execution) {
 
-        MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
-        NettunitService nettunit = SpringContext.getBean(NettunitService.class);
-        if (nettunit.FailingTaskName.isPresent()) {
-            if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
-                String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-                nettunit.FailedTaskName = Optional.of(taskName);
-                nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
-                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
-            }
-        }
+        super.execute(execution);
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
-        nettunit.currentTask = Optional.of(this.getClass().getName());
+        getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
 
         //TODO
         // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
+
+        MUSAProducerService musaService = getMUSAService();
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
+
+        String taskName = ((ExecutionEntityImpl) execution).getActivityName();
+        String taskID = ((ExecutionEntityImpl) execution).getActivityId();
+        this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
+        this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
+        this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.DIRECTOR_ETNEA_OBSERVATORY);
+        recipients.addOne(JixelDomainInformation.PCRS);
+        recipients.addOne(JixelDomainInformation.REGIONE_SICILIA);
+        recipients.addOne(JixelDomainInformation.COMUNE_PACHINO_POLIZIA_MUNICIPALE);
+        musaService.addRecipient(evt, recipients.toList());
+
+        musaService.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
+        musaService.updateEventTypology(evt, JixelDomainInformation.EVENT_TYPE_VULCANO);
+        musaService.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
+        musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS]");
+
     }
+
 }

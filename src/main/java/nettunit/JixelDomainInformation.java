@@ -1,12 +1,36 @@
 package nettunit;
 
 public class JixelDomainInformation {
+
+    public final static int EVENT_TYPE_VULCANO = 1; // Da definire valore
     public final static int PREFECT = 72;
     public final static int MAYOR = 6639;
+    public final static int DEPUTY_MAYOR = 6639;
     public final static int COMMANDER_FIRE_BRIGADE = 6671;
+    public final static int DIRECTOR_ETNEA_OBSERVATORY = 6672; // Da definire valore
+    public final static int CNR_IRIB = 6673; // Da definire valore
 
+    // ORG
     public final static int ASP = 72;
     public final static int ARPA = 72;
+    public final static int PCRS = 72;
+    public final static int PCCT = 72;
+    public final static int REGIONE_SICILIA = 72;
+    public final static int INM = 72;
+
+    public final static int PC_TUNISIA = 72;
+    public final static int COMUNE_PACHINO = 72;
+    public final static int COMUNE_GELA = 72;
+
+    public final static int COMUNE_CATANIA_POLIZIA_MUNICIPALE = 72;
+    public final static int COMUNE_PACHINO_POLIZIA_MUNICIPALE = 72;
+
+    public final static int TN = 72;
+    public final static int NABEUL = 72;
+    public final static int TENAR = 72;
+    public final static int TENFR = 72;
+
+    // TODO add others
 
     public final static int URGENCY_LEVEL_IMMEDIATA = 1;
     public final static int URGENCY_LEVEL_FUTURA = 2;

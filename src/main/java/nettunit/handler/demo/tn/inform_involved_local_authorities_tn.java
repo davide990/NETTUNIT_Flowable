@@ -4,6 +4,7 @@ import RabbitMQ.JixelEvent;
 import nettunit.JixelDomainInformation;
 import nettunit.NettunitService;
 import nettunit.SpringContext;
+import nettunit.handler.base.BaseHandler;
 import nettunit.handler.do_crossborder_communication;
 import nettunit.rabbitMQ.ProducerService.MUSAProducerService;
 import org.flowable.engine.delegate.BpmnError;
@@ -18,33 +19,33 @@ import java.util.Optional;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
 
-public class inform_involved_local_authorities_tn implements JavaDelegate {
+public class inform_involved_local_authorities_tn extends BaseHandler {
 
-    private static Logger logger = LoggerFactory.getLogger(do_crossborder_communication.class);
+    private static Logger logger = LoggerFactory.getLogger(inform_involved_local_authorities_tn.class);
 
     @Override
     public void execute(DelegateExecution execution) {
 
-        MUSAProducerService MUSAProducer = SpringContext.getBean(MUSAProducerService.class);
-        NettunitService nettunit = SpringContext.getBean(NettunitService.class);
-        if (nettunit.FailingTaskName.isPresent()) {
-            if (nettunit.FailingTaskName.get().equals(this.getClass().getName())) {
-                String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-                nettunit.FailedTaskName = Optional.of(taskName);
-                nettunit.FailedTaskImplementation = Optional.of(this.getClass().getName());
-                throw new BpmnError("REQUIRE_ORCHESTRATION", this.getClass().getName());
-            }
-        }
+        super.execute(execution);
 
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
-        ArrayBuffer recipients = new ArrayBuffer<>();
-        recipients.addOne(JixelDomainInformation.ASP);
-        recipients.addOne(JixelDomainInformation.ARPA);
-        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
-        MUSAProducer.addRecipient(evt, recipients.toList());
-
+        getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
 
         //TODO
         // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
+
+        MUSAProducerService musaService = getMUSAService();
+        JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
+
+        ArrayBuffer recipients = new ArrayBuffer<>();
+        recipients.addOne(JixelDomainInformation.PC_TUNISIA);
+        recipients.addOne(JixelDomainInformation.TN);
+        recipients.addOne(JixelDomainInformation.TENAR);
+        recipients.addOne(JixelDomainInformation.TENFR);
+
+        musaService.updateCommType(evt, JixelDomainInformation.COMM_TYPE_OPERATIVA);
+        musaService.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
+
     }
+
 }
