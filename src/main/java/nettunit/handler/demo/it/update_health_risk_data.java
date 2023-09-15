@@ -42,7 +42,7 @@ public class update_health_risk_data extends BaseHandler implements TriggerableA
         String taskName = ((ExecutionEntityImpl) execution).getActivityName();
         String taskID = ((ExecutionEntityImpl) execution).getActivityId();
 
-        musaService.updateEventDescription(evt, "*comunicazione attivazione dello stato di ALLARME, l'attivazione del COC e del modello di intervento* [Prefetto]");
+        musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT]");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());

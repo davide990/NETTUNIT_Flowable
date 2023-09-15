@@ -8,10 +8,9 @@ public class JixelDomainInformation {
     public final static int DEPUTY_MAYOR = 6639;
     public final static int COMMANDER_FIRE_BRIGADE = 6671;
     public final static int DIRECTOR_ETNEA_OBSERVATORY = 6672; // Da definire valore
-    public final static int CNR_IRIB = 6673; // Da definire valore
 
     // ORG
-    public final static int ASP = 72;
+    public final static int ASP = 72; // CNR-IRIB
     public final static int ARPA = 72;
     public final static int PCRS = 72;
     public final static int PCCT = 72;

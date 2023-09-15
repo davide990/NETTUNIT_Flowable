@@ -41,15 +41,17 @@ public class evaluate_incident_scenario extends BaseHandler implements Triggerab
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
 
-        String taskName = ((ExecutionEntityImpl) execution).getActivityName();
-        String taskID = ((ExecutionEntityImpl) execution).getActivityId();
-
-        MUSAProducerService musaService = getMUSAService();
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
+        String taskID = ((ExecutionEntityImpl) execution).getActivityId();
+        String taskName = ((ExecutionEntityImpl) execution).getActivityName();
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());
+
+        this.getMUSAService().updateEventDescription(evt, "* Richiesta aggiornamento evento");
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName() + "  Waiting for ack...");
 
     }
 

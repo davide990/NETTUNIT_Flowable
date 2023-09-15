@@ -41,9 +41,6 @@ public class involve_pertinent_roles_pcrs extends BaseHandler implements Trigger
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName());
         getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
 
-        //TODO
-        // send to MUSA predicate update (ex. obtained_health_risk_estimate >> evolution)
-
         MUSAProducerService musaService = getMUSAService();
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
 
@@ -52,9 +49,9 @@ public class involve_pertinent_roles_pcrs extends BaseHandler implements Trigger
 
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.PCRS);
+        // recipients.addOne(JixelDomainInformation.PREFECT);
+        // recipients.addOne(JixelDomainInformation.MAYOR); // Fatto in step successivo
         musaService.addRecipient(evt, recipients.toList());
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
-        musaService.updateEventDescription(evt, "Add involved_pertinent_bodies(pcrs)");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());

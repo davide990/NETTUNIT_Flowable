@@ -43,11 +43,11 @@ public class involve_pertinent_roles_irib extends BaseHandler implements Trigger
         String taskID = ((ExecutionEntityImpl) execution).getActivityId();
 
         ArrayBuffer recipients = new ArrayBuffer<>();
-        recipients.addOne(JixelDomainInformation.CNR_IRIB);
+        recipients.addOne(JixelDomainInformation.ASP);
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
-        musaService.updateEventDescription(evt, "*valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT]");
+        musaService.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
