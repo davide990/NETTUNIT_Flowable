@@ -20,7 +20,7 @@ public class inform_pcct extends BaseHandler implements TriggerableActivityBehav
 
     private static Logger logger = LoggerFactory.getLogger(inform_pcct.class);
 
-    String evolution_predicate = "involved_local_authorities";
+    String evolution_predicate = "involved_competent_roles(pcct)";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {

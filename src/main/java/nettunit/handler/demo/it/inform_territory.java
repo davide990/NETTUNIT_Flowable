@@ -20,7 +20,7 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
 
     private static Logger logger = LoggerFactory.getLogger(inform_territory.class);
 
-    String evolution_predicate = "involved_local_authorities";
+    String evolution_predicate = "involved_competent_roles(comune)";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
@@ -47,6 +47,9 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
         recipients.addOne(JixelDomainInformation.COMUNE_GELA);
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMUSAService().updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto]");
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
