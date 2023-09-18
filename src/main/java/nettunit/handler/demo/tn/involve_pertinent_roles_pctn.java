@@ -38,7 +38,6 @@ public class involve_pertinent_roles_pctn extends BaseHandler {
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
 
         ArrayBuffer recipients = new ArrayBuffer<>();
-        recipients.addOne(JixelDomainInformation.PREFECT);
         recipients.addOne(JixelDomainInformation.MAYOR);
         recipients.addOne(JixelDomainInformation.PC_TUNISIA);
         musaService.addRecipient(evt, recipients.toList());

@@ -20,7 +20,7 @@ public class comune_inform_citizen_closing_sirens extends BaseHandler implements
 
     private static Logger logger = LoggerFactory.getLogger(comune_inform_citizen_closing_sirens.class);
 
-    String evolution_predicate = "inform_via_app(comune)";
+    String evolution_predicate = "informed_citizens(comune,closing)";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {

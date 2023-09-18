@@ -25,7 +25,7 @@ public class evaluate_incident_scenario extends BaseHandler implements Triggerab
 
     private static Logger logger = LoggerFactory.getLogger(do_crossborder_communication.class);
 
-    String evolution_predicate = "scenario_evaluated";
+    String evolution_predicate = "scenario_evaluated()";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
@@ -49,8 +49,10 @@ public class evaluate_incident_scenario extends BaseHandler implements Triggerab
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());
 
-        this.getMUSAService().updateEventDescription(evt, "* Richiesta aggiornamento evento");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
+        this.getMUSAService().updateEventDescription(evt, "* Richiesta aggiornamento evento");
+
         logger.info("Executing capability [" + execution.getId() + "]: " + this.getClass().getSimpleName() + "  Waiting for ack...");
 
     }

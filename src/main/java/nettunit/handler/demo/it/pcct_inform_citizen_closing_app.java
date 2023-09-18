@@ -20,7 +20,7 @@ public class pcct_inform_citizen_closing_app extends BaseHandler implements Trig
 
     private static Logger logger = LoggerFactory.getLogger(pcct_inform_citizen_closing_app.class);
 
-    String evolution_predicate = "inform_via_app(pcct)";
+    String evolution_predicate = "informed_citizens(pcct,closing)";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {

@@ -485,8 +485,6 @@ public class NettunitService {
         }
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.MAYOR);
-        recipients.addOne(JixelDomainInformation.PREFECT);
-        recipients.addOne(JixelDomainInformation.COMMANDER_FIRE_BRIGADE);
         MUSAProducer.addRecipient(evt.get(), recipients.toList());
     }
 

@@ -39,22 +39,24 @@ public class identifying_incident extends BaseHandler implements TriggerableActi
 
         JixelEvent evt = (JixelEvent) execution.getVariable(JIXEL_EVENT_VAR_NAME);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.DIRECTOR_ETNEA_OBSERVATORY);
         this.getMUSAService().addRecipient(evt, recipients.toList());
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         this.getMUSAService().updateCommType(evt, JixelDomainInformation.COMM_TYPE_PREOPERATIVA);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
         this.getMUSAService().updateEventTypology(evt, JixelDomainInformation.EVENT_TYPE_VULCANO);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
         this.getMUSAService().updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_FUTURA);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
         this.getMUSAService().updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_MINORE);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
         this.getMUSAService().updateEventDescription(evt, "test");
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);

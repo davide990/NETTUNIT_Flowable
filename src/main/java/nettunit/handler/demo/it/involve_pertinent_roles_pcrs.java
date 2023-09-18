@@ -47,12 +47,12 @@ public class involve_pertinent_roles_pcrs extends BaseHandler implements Trigger
         String taskName = ((ExecutionEntityImpl) execution).getActivityName();
         String taskID = ((ExecutionEntityImpl) execution).getActivityId();
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.PCRS);
-        // recipients.addOne(JixelDomainInformation.PREFECT);
-        // recipients.addOne(JixelDomainInformation.MAYOR); // Fatto in step successivo
         musaService.addRecipient(evt, recipients.toList());
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);

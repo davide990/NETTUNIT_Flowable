@@ -20,7 +20,7 @@ public class update_airborne_dispersion_data extends BaseHandler implements Trig
 
     private static Logger logger = LoggerFactory.getLogger(update_airborne_dispersion_data.class);
 
-    String evolution_predicate = "updated_airborne_dispersion_data";
+    String evolution_predicate = "updated_airborne_dispersion_data()";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {

@@ -42,11 +42,15 @@ public class involve_pertinent_roles_inm extends BaseHandler implements Triggera
         String taskName = ((ExecutionEntityImpl) execution).getActivityName();
         String taskID = ((ExecutionEntityImpl) execution).getActivityId();
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.INM);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+        musaService.addRecipient(evt, recipients.toList());
+
         musaService.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);

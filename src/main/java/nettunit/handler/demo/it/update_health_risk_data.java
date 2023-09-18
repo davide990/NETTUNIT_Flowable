@@ -20,7 +20,7 @@ public class update_health_risk_data extends BaseHandler implements TriggerableA
 
     private static Logger logger = LoggerFactory.getLogger(update_health_risk_data.class);
 
-    String evolution_predicate = "updated_health_risk_data";
+    String evolution_predicate = "updated_health_risk_data()";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {

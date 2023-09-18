@@ -20,7 +20,7 @@ public class pcct_inform_citizen_opening_sirens extends BaseHandler implements T
 
     private static Logger logger = LoggerFactory.getLogger(pcct_inform_citizen_opening_sirens.class);
 
-    String evolution_predicate = "informed_citizens(pcct)";
+    String evolution_predicate = "informed_citizens(pcct,opening)";
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
