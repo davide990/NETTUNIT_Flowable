@@ -5,7 +5,7 @@ public class JixelDomainInformation {
     public final static int EVENT_TYPE_VULCANO = 1; // Da definire valore
     public final static int PREFECT = 72;
     public final static int MAYOR = 6639;
-    public final static int DEPUTY_MAYOR = 6639;
+    public final static int DEPUTY_MAYOR = 164;
     public final static int COMMANDER_FIRE_BRIGADE = 6671;
     public final static int DIRECTOR_ETNEA_OBSERVATORY = 6672; // Da definire valore
 
@@ -28,6 +28,17 @@ public class JixelDomainInformation {
     public final static int NABEUL = 72;
     public final static int TENAR = 72;
     public final static int TENFR = 72;
+
+    // FTZ PER COMUNICAZIONE
+    public final static int OPERATORE_SIRENE = 72;
+    public final static int OPERATORE_APP = 72;
+    public final static int OPERATORE_SIRENE_PACHINO = 72;
+    public final static int OPERATORE_APP_PACHINO = 72;
+    public final static int OPERATORE_SIRENE_GELA = 72;
+    public final static int OPERATORE_APP_GELA = 72;
+    public final static int OPERATORE_SIRENE_CATANIA = 72;
+    public final static int OPERATORE_APP_CATANIA = 72;
+
 
     // TODO add others
 
