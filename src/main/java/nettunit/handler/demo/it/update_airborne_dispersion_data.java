@@ -45,6 +45,8 @@ public class update_airborne_dispersion_data extends BaseHandler implements Trig
         musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM]");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

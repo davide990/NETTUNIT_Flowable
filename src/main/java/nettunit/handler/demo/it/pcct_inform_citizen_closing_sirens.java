@@ -50,6 +50,8 @@ public class pcct_inform_citizen_closing_sirens extends BaseHandler implements T
         musaService.updateEventDescription(evt, "*emergenza superata, interrompere suono sirene e avviso della popolazione tramite APP* + *emergenza superata, ripristino delle condizioni di normalità, l'evento può considerarsi concluso* [PC - Catania]");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

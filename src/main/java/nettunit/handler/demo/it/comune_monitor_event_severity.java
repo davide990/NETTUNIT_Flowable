@@ -54,6 +54,8 @@ public class comune_monitor_event_severity extends BaseHandler implements Trigge
         musaService.updateEventDescription(evt, "*emergenza superata, ritorno al livello di criticità ordinaria (allerta gialla)* [PC - Catania]");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

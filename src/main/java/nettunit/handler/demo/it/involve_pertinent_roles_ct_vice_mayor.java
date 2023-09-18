@@ -47,6 +47,8 @@ public class involve_pertinent_roles_ct_vice_mayor extends BaseHandler implement
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

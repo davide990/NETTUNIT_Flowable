@@ -45,6 +45,8 @@ public class update_health_risk_data extends BaseHandler implements TriggerableA
         musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT]");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

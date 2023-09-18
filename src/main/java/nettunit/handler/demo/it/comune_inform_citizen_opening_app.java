@@ -51,6 +51,7 @@ public class comune_inform_citizen_opening_app extends BaseHandler implements Tr
         musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto] + *ordine alla polizia municipale di avviso della popolazione tramite APP sulle misure di autoprotezione da attuare* [PC - Catania] + *Inviare comunicazione via APP ai cittadini sull'emergenza.");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());

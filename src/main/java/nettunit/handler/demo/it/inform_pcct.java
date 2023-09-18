@@ -63,6 +63,8 @@ public class inform_pcct extends BaseHandler implements TriggerableActivityBehav
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         // Launch MUSA->NewGoal(process_pc_ct)
         Thread t_pcct = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_pc_ct.txt",
                 "process_pc_ct",

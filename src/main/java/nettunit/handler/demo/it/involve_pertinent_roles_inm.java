@@ -49,6 +49,8 @@ public class involve_pertinent_roles_inm extends BaseHandler implements Triggera
         recipients.addOne(JixelDomainInformation.INM);
         musaService.addRecipient(evt, recipients.toList());
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         musaService.updateUrgencyLevel(evt, JixelDomainInformation.URGENCY_LEVEL_IMMEDIATA);
 
 

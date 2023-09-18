@@ -61,6 +61,8 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
         this.getNETTUNITService().FailedTaskImplementation = Optional.of(this.getClass().getName());
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
         // Launch MUSA->NewGoal(process_pc_ct)
         Thread t_comune = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_comune.txt",
                 "process_comune",

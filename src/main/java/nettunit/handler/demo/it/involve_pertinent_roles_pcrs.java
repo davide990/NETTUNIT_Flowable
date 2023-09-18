@@ -53,6 +53,8 @@ public class involve_pertinent_roles_pcrs extends BaseHandler implements Trigger
         recipients.addOne(JixelDomainInformation.PCRS);
         musaService.addRecipient(evt, recipients.toList());
 
+        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);

@@ -30,7 +30,11 @@ public class MUSARabbitMQConsumerService extends Consumer {
                 public void onNotifyEvent(JixelEvent event) {
                     //TODO here, should I create a new process instance?
                     //nettunitService.applyInterventionRequest(event);
-                    applyInterventionRequest(event);
+                    if (event.incident_id().isEmpty())
+                        applyInterventionRequest(event);
+                    else
+                        completeTaskByEvent(event);
+//                    applyInterventionRequest(event);
                 }
 
                 @Override
