@@ -76,7 +76,7 @@ public class MUSARabbitMQConsumerService extends Consumer {
 
                 @Override
                 public void onJixelAckEventDescription(JixelAckEventDescription msg) {
-                    System.out.println("received ack");
+                    //System.out.println("received ack");
                     completeTaskByEvent(msg.original_message().data().incident_id());
                 }
 

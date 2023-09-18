@@ -126,12 +126,7 @@ public class NettunitService {
 
         processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
         processEngine.getProcessEngineConfiguration().setAsyncExecutorActivate(true);
-        //processEngine.getProcessEngineConfiguration().setDefaultFailedJobWaitTime(5);
         processEngine.getProcessEngineConfiguration().setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
-        //processEngine.getProcessEngineConfiguration().setAsyncHistoryExecutorActivate(true);
-
-        //.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE)
-        //                .setAsyncExecutorActivate(true)
 
         deployment = Boolean.parseBoolean(env.getProperty("deployment_flag"));
 

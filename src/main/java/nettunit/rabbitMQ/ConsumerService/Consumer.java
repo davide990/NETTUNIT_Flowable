@@ -53,6 +53,10 @@ abstract public class Consumer {
         if (taskToComplete.isPresent()) {
             listener.ifPresent(l -> l.completeTask(obj.get(), taskToComplete.get()));
             logger.info("[JIXEL EVENT ID " + obj.get().id() + "] Completed Task with ID: " + taskToComplete.get());
+            if (pendingMessages.containsKey(obj.get())){
+                logger.info("~~~~~~ Number of pending messages: " + pendingMessages.get(obj.get()).size());
+            }
+
         }
     }
 
@@ -103,7 +107,7 @@ abstract public class Consumer {
         if (pendingMessages.get(evt).isEmpty()) {
             return Optional.empty();
         }
-        //logger.info("[CONSUMER] Removing " + pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1));
+        logger.info("[CONSUMER] Removing " + pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1));
         Optional<String> taskIDToComplete = Optional.of(pendingMessages.get(evt).get(pendingMessages.get(evt).size() - 1));
         pendingMessages.get(evt).remove(pendingMessages.get(evt).size() - 1);
         if (pendingMessages.get(evt).isEmpty()) {
