@@ -78,6 +78,7 @@ public class NettunitService {
 
     ManagementService managementService;
 
+
     @Autowired
     private Environment env;
 
@@ -121,11 +122,20 @@ public class NettunitService {
         processByEvents = new HashMap<>();
         completedUserTasksByEvents = new HashMap<>();
         completedServiceTasksByEvents = new HashMap<>();
+
+
         processEngine.getProcessEngineConfiguration().setCreateDiagramOnDeploy(false);
         processEngine.getProcessEngineConfiguration().setAsyncExecutorActivate(true);
+        //processEngine.getProcessEngineConfiguration().setDefaultFailedJobWaitTime(5);
         processEngine.getProcessEngineConfiguration().setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        //processEngine.getProcessEngineConfiguration().setAsyncHistoryExecutorActivate(true);
+
+        //.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE)
+        //                .setAsyncExecutorActivate(true)
 
         deployment = Boolean.parseBoolean(env.getProperty("deployment_flag"));
+
+        //asyncExecutorActivate
 
         if (deployment)
             MUSARabbitMQConsumerService.setListener(new PendingMessageComponentListener() {
@@ -140,7 +150,19 @@ public class NettunitService {
                     nettunit.applyInterventionRequest(evt);
                 }
             });
+        //else
+        /*JixelProducer.setListener(new PendingMessageComponentListener() {
+            @Override
+            public void completeTask(JixelEvent evt, String taskID) {
+                onCompleteTask(evt, taskID);
+            }
 
+            @Override
+            public void applyInterventionRequest(JixelEvent evt) {
+                NettunitService nettunit = SpringContext.getBean(NettunitService.class);
+                nettunit.applyInterventionRequest(evt);
+            }
+        });*/
     }
 
     private void onCompleteTask(JixelEvent evt, String taskID) {
@@ -152,10 +174,6 @@ public class NettunitService {
         //taskService.complete(taskID);
         completeUserTask(evt, taskID);
         logger.info("Completed Task with ID: " + taskID);
-
-
-
-
     }
 
     /**
@@ -233,9 +251,9 @@ public class NettunitService {
 
         int numDeployedArtifact = ((DeploymentEntityImpl) deployment).getDeployedArtifacts(ProcessDefinitionEntityImpl.class).size();
         if (numDeployedArtifact > 0) {
-            logger.info("[FLOWABLE] SUCCESS: process deployment with id " + processID);
+            logger.info("SUCCESS: process deployment with id " + processID);
         } else {
-            logger.error("[FLOWABLE] FAIL: process deployment with id " + processID);
+            logger.error("FAIL: process deployment with id " + processID);
         }
     }
 
@@ -332,7 +350,7 @@ public class NettunitService {
         logger.info(" ~~~~~~ Jixel event id: " + incidentEvent.id());
         logger.info(" ~~~~~~ Jixel caller: " + incidentEvent.caller_name());
         logger.info(" ~~~~~~ Process instance: " + processDefinitionKey);
-        Map<String, Object> variables = new HashMap<>();
+        Map<String, Object> variables = new HashMap<String, Object>();
 
         int id = incidentEvent.id();
         String evt_type = incidentEvent.description();
@@ -575,8 +593,8 @@ public class NettunitService {
         // in your case only one execution is selected
         List<Execution> executions = runtimeService.createExecutionQuery().onlyChildExecutions()
                 .processInstanceId(processByEvents.get(evt)).list();
-// activityId is id from the modeler. Can be any wait state (user task, async service task, receive task.....)
-        List<String> activityIds = executions.stream().map(Execution::getActivityId).collect(Collectors.toList());
+        // activityId is id from the modeler. Can be any wait state (user task, async service task, receive task.....)
+         List<String> activityIds = executions.stream().map(Execution::getActivityId).collect(Collectors.toList());
 
 
         Optional<Execution> execution = Optional.ofNullable(this.runtimeService.createExecutionQuery()
@@ -584,29 +602,11 @@ public class NettunitService {
                 .activityId(taskID)
                 .singleResult());
 
-        Task task = this.taskService.createTaskQuery()
-                .processInstanceId(processByEvents.get(evt))
-                .taskId(taskID)
-                .singleResult();
-
         if (execution.isPresent()) {
             this.runtimeService.trigger(execution.get().getId());
         } else {
             logger.error("No execution found for taskID: " + taskID);
         }
-        //                .activityId(getTaskName(taskID))
-        /*Task task = this.taskService.createTaskQuery()
-                .processInstanceId(processByEvents.get(evt))
-                //.taskName(getTaskName(taskID))
-                .taskId(execution.getId())
-                .singleResult();*/
-
-        // Trigger the service task.
-        //this.runtimeService.trigger(execution.getId());
-
-
-        // Complete the user task
-        //this.taskService.complete(task.getId());
     }
 
 
