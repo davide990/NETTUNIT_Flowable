@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
 
 import static nettunit.NettunitService.JIXEL_EVENT_VAR_NAME;
@@ -127,7 +128,9 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
                 .build();
         try {
             Response response = client.newCall(request).execute();
-            return response.body().string();
+            String theResponse = response.body().string();
+            Objects.requireNonNull(response.body()).close();
+            return theResponse;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
