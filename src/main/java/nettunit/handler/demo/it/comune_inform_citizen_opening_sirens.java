@@ -47,7 +47,7 @@ public class comune_inform_citizen_opening_sirens extends BaseHandler implements
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
-        musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto] + *attivazione COC e delle sirene per l&#39;avviso alla popolazione di attuazione delle misure di auto-protezione&quot; [Sindaco_Pachino] + * Attivazione sirene per comunicazione ai cittadini dell'emergenza.");
+        musaService.updateEventDescription(evt, "*Attivazione sirene per comunicazione ai cittadini dell'emergenza.");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getMusaRabbitMQConsumerService().save(evt, taskID);

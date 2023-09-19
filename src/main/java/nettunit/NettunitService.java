@@ -176,6 +176,7 @@ public class NettunitService {
         //taskService.complete(taskID);
         completeUserTask(evt, taskID);
         logger.info("Completed Task with ID: " + taskID);
+        logger.info("Completed Task: " + getTaskName(taskID));
     }
 
     /**
