@@ -422,7 +422,7 @@ public class NettunitService {
      * @param taskID
      * @return a process ID
      */
-    private String getProcessID(String taskID) {
+    public String getProcessID(String taskID) {
         //get the tasks
         List<Task> tasks = taskService.createTaskQuery().list();
 
@@ -431,25 +431,31 @@ public class NettunitService {
 
 
         //get the one which task id matches the input ID
-        //Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
         if (ee.isPresent()) {  //if (tt.isPresent()) {
             //return the corresponding process ID
             return ee.get().getProcessInstanceId();
+        } else if (tt.isPresent()) {
+            return tt.get().getProcessInstanceId();
         }
+        logger.error("No process found from task id [\"" + taskID + "\"]");
         throw new InvalidParameterException("No task found with id [" + taskID + "]");
     }
 
     private String getTaskName(String taskID) {
         //get the tasks
-        //List<Task> tasks = taskService.createTaskQuery().list();
+        List<Task> tasks = taskService.createTaskQuery().list();
         Optional<ActivityInstance> ee = runtimeService.createActivityInstanceQuery().list().stream()
                 .filter(t -> t.getActivityId().equals(taskID)).findFirst();
 
         //get the one which task id matches the input ID
-        //Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
+        Optional<Task> tt = tasks.stream().filter(t -> t.getId().equals(taskID)).findAny();
         if (ee.isPresent()) {
             return ee.get().getActivityName();//.getName();
+        } else if (tt.isPresent()) {
+            return tt.get().getName();
         }
+        logger.error("No task found with id [\"" + taskID + "\"]");
         throw new InvalidParameterException("No task found with id [" + taskID + "]");
     }
 
