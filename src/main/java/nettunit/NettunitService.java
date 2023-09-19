@@ -162,7 +162,14 @@ public class NettunitService {
 
     private void onCompleteTask(JixelEvent evt, String taskID) {
         // I set a variable so that I can access the event (at the current state) from service task handlers
-        runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
+        //runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
+
+        if (evt.incident_id().isEmpty()){
+            runtimeService.setVariable(getProcessID(taskID), JIXEL_EVENT_VAR_NAME, evt);
+            processByEvents.put(evt, getProcessID(taskID));
+        }
+
+
         // update the event
         processByEvents.put(evt, getProcessID(taskID));
         // complete the task. Check => taskService.createTaskQuery().taskUnassigned().list()
@@ -484,6 +491,7 @@ public class NettunitService {
             MUSARabbitMQConsumerService.save(evt.get(), taskID);
         }
         ArrayBuffer recipients = new ArrayBuffer<>();
+
         recipients.addOne(JixelDomainInformation.MAYOR);
         MUSAProducer.addRecipient(evt.get(), recipients.toList());
     }

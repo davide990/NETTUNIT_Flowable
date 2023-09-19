@@ -61,31 +61,28 @@ abstract public class Consumer {
     }
 
     public void completeTaskByEvent(JixelEvent obj) {
-        /*boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
-        if (!hasEvent) {
-            //maybe it's a service task?
-            completeServiceTaskByEvent(obj);
-            return;
-        }*/
-
-
-        //Optional<JixelEvent> theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
-
         Optional<JixelEvent> theEvent = Optional.empty();
         if (obj.incident_id().isEmpty())
-             theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
+            theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
         else
             theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == (Integer) obj.incident_id().get()).findFirst();
+
+        String inc_id = "";
+        if (obj.incident_id().isDefined())
+            inc_id = obj.incident_id().get().toString();
 
         if (theEvent.isPresent()) {
             Optional<String> taskToComplete = remove(theEvent.get());
             //Optional<String> taskToComplete = remove(obj);
             if (taskToComplete.isPresent()) {
                 listener.ifPresent(l -> l.completeTask(obj, taskToComplete.get()));
-                logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+
+                logger.info("[JIXEL EVENT ID " + obj.id() + " INC ID: " + inc_id + "] Completed Task with ID: " + taskToComplete.get());
             }
         } else {
+            logger.warn("[JIXEL EVENT ID " + obj.id() + " INC ID: " + inc_id + "]:");
             logger.warn("Unable to find JixelEvent with id [" + obj.id() + "] among pending messages queue.");
+            //logger.warn("Unable to find JixelEvent with id [" + obj.id() + "] among pending messages queue.");
         }
 
     }
