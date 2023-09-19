@@ -31,8 +31,13 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
+        JixelEvent evt = (JixelEvent) delegateExecution.getVariable(JIXEL_EVENT_VAR_NAME);
         this.getNETTUNITService().updateMUSAStateOfWorld(StateOfWorldUpdateOp.ADD, evolution_predicate, this.getClass().getName());
         logger.info("Capability executed correctly [" + delegateExecution.getId() + "]: " + this.getClass().getSimpleName());
+//        Thread t_comune = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_comune.txt",
+//                "process_comune",
+//                evt));
+//        t_comune.start();
     }
 
     @Override
@@ -51,7 +56,7 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
 
         ArrayBuffer recipients = new ArrayBuffer<>();
         recipients.addOne(JixelDomainInformation.COMUNE_PACHINO);
-        recipients.addOne(JixelDomainInformation.COMUNE_GELA);
+//        recipients.addOne(JixelDomainInformation.COMUNE_GELA);
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
         this.getMUSAService().updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto]");
@@ -65,10 +70,7 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         // Launch MUSA->NewGoal(process_pc_ct)
-        Thread t_comune = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_comune.txt",
-                "process_comune",
-                evt));
-        t_comune.start();
+
     }
 
 

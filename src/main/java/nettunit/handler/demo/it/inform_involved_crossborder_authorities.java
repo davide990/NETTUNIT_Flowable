@@ -24,6 +24,7 @@ public class inform_involved_crossborder_authorities extends BaseHandler impleme
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
+//        JixelEvent evt = (JixelEvent) delegateExecution.getVariable(JIXEL_EVENT_VAR_NAME);
         this.getNETTUNITService().updateMUSAStateOfWorld(StateOfWorldUpdateOp.ADD, evolution_predicate, this.getClass().getName());
         logger.info("Capability executed correctly [" + delegateExecution.getId() + "]: " + this.getClass().getSimpleName());
     }

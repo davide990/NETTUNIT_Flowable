@@ -49,7 +49,7 @@ public class pcct_decide_response_type extends BaseHandler implements Triggerabl
 
         musaService.updateUrgencyLevel(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
-        musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto]");
+        musaService.updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento*");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getMusaRabbitMQConsumerService().save(evt, taskID);

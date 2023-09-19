@@ -31,8 +31,13 @@ public class inform_pcct extends BaseHandler implements TriggerableActivityBehav
 
     @Override
     public void trigger(DelegateExecution delegateExecution, String signalEvent, Object signalData) {
+        JixelEvent evt = (JixelEvent) delegateExecution.getVariable(JIXEL_EVENT_VAR_NAME);
         this.getNETTUNITService().updateMUSAStateOfWorld(StateOfWorldUpdateOp.ADD, evolution_predicate, this.getClass().getName());
         logger.info("Capability executed correctly [" + delegateExecution.getId() + "]: " + this.getClass().getSimpleName());
+//        Thread t_pcct = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_pc_ct.txt",
+//                "process_pc_ct",
+//                evt));
+//        t_pcct.start();
     }
 
     @Override
@@ -67,10 +72,7 @@ public class inform_pcct extends BaseHandler implements TriggerableActivityBehav
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         // Launch MUSA->NewGoal(process_pc_ct)
-        Thread t_pcct = new Thread(() -> deployAndExecuteProcess("goalmodel_demo/process_pc_ct.txt",
-                "process_pc_ct",
-                evt));
-        t_pcct.start();
+
     }
 
 
