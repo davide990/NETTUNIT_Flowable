@@ -67,7 +67,16 @@ abstract public class Consumer {
             completeServiceTaskByEvent(obj);
             return;
         }*/
-        Optional<JixelEvent> theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
+
+
+        //Optional<JixelEvent> theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
+
+        Optional<JixelEvent> theEvent = Optional.empty();
+        if (obj.incident_id().isEmpty())
+             theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
+        else
+            theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == (Integer) obj.incident_id().get()).findFirst();
+
         if (theEvent.isPresent()) {
             Optional<String> taskToComplete = remove(theEvent.get());
             //Optional<String> taskToComplete = remove(obj);
