@@ -111,7 +111,9 @@ public class inform_territory extends BaseHandler implements TriggerableActivity
                 .build();
         try {
             Response response = client.newCall(request).execute();
-            logger.info(response.body().string());
+            String theResponse = response.body().string();
+            logger.info(theResponse);
+            Objects.requireNonNull(response.body()).close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
