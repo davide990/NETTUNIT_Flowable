@@ -43,17 +43,17 @@ abstract public class Consumer {
 
     public void completeTaskByEvent(int incidentID) {
         Optional<JixelEvent> obj = pendingMessages.keySet().stream().filter(ev -> ev.id() == incidentID).findFirst();
-//        boolean hasEvent = obj.isPresent();
-//        if (!hasEvent) {
-//            //maybe it's a service task?
-//            completeServiceTaskByEvent(obj.get());
-//            return;
-//        }
+        boolean hasEvent = obj.isPresent();
+        /*if (!hasEvent) {
+            //maybe it's a service task?
+            completeServiceTaskByEvent(obj.get());
+            return;
+        }*/
         Optional<String> taskToComplete = remove(obj.get());
         if (taskToComplete.isPresent()) {
             listener.ifPresent(l -> l.completeTask(obj.get(), taskToComplete.get()));
             logger.info("[JIXEL EVENT ID " + obj.get().id() + "] Completed Task with ID: " + taskToComplete.get());
-            if (pendingMessages.containsKey(obj.get())){
+            if (pendingMessages.containsKey(obj.get())) {
                 logger.info("~~~~~~ Number of pending messages: " + pendingMessages.get(obj.get()).size());
             }
 
@@ -61,17 +61,24 @@ abstract public class Consumer {
     }
 
     public void completeTaskByEvent(JixelEvent obj) {
-//        boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
-//        if (!hasEvent) {
-//            //maybe it's a service task?
-//            completeServiceTaskByEvent(obj);
-//            return;
-//        }
-        Optional<String> taskToComplete = remove(obj);
-        if (taskToComplete.isPresent()) {
-            listener.ifPresent(l -> l.completeTask(obj, taskToComplete.get()));
-            logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+        /*boolean hasEvent = pendingMessages.keySet().stream().map(x -> x.id()).collect(Collectors.toList()).contains(obj.id());
+        if (!hasEvent) {
+            //maybe it's a service task?
+            completeServiceTaskByEvent(obj);
+            return;
+        }*/
+        Optional<JixelEvent> theEvent = pendingMessages.keySet().stream().filter(ev -> ev.id() == obj.id()).findFirst();
+        if (theEvent.isPresent()) {
+            Optional<String> taskToComplete = remove(theEvent.get());
+            //Optional<String> taskToComplete = remove(obj);
+            if (taskToComplete.isPresent()) {
+                listener.ifPresent(l -> l.completeTask(obj, taskToComplete.get()));
+                logger.info("[JIXEL EVENT ID " + obj.id() + "] Completed Task with ID: " + taskToComplete.get());
+            }
+        } else {
+            logger.warn("Unable to find JixelEvent with id [" + obj.id() + "] among pending messages queue.");
         }
+
     }
 
     public void completeServiceTaskByEvent(JixelEvent obj) {
@@ -101,6 +108,7 @@ abstract public class Consumer {
     }
 
     public Optional<String> remove(JixelEvent evt) {
+
         if (!pendingMessages.containsKey(evt)) {
             return Optional.empty();
         }
