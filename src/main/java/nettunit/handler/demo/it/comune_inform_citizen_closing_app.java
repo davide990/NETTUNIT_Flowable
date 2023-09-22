@@ -47,7 +47,7 @@ public class comune_inform_citizen_closing_app extends BaseHandler implements Tr
         musaService.addRecipient(evt, recipients.toList());
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
-        musaService.updateEventDescription(evt, "*emergenza superata, avviso della popolazione tramite APP* + *emergenza superata, ripristino delle condizioni di normalità, l'evento può considerarsi concluso* [PC - Catania]");
+        musaService.updateEventDescription(evt, "*emergenza superata, ripristino delle condizioni di normalità, l'evento può considerarsi concluso*");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getMusaRabbitMQConsumerService().save(evt, taskID);

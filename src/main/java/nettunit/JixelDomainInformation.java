@@ -28,14 +28,14 @@ public class JixelDomainInformation {
     public final static int TENFR = 164; // TO DO
 
     // FTZ PER COMUNICAZIONE
-    public final static int OPERATORE_SIRENE = 164;
-    public final static int OPERATORE_APP = 164;
-    public final static int OPERATORE_SIRENE_PACHINO = 164;
-    public final static int OPERATORE_APP_PACHINO = 164;
-    public final static int OPERATORE_SIRENE_GELA = 164;
-    public final static int OPERATORE_APP_GELA = 164;
-    public final static int OPERATORE_SIRENE_CATANIA = 164;
-    public final static int OPERATORE_APP_CATANIA = 164;
+    public final static int OPERATORE_SIRENE = 157;
+    public final static int OPERATORE_APP = 157;
+    public final static int OPERATORE_SIRENE_PACHINO = 157;
+    public final static int OPERATORE_APP_PACHINO = 157;
+    public final static int OPERATORE_SIRENE_GELA = 157;
+    public final static int OPERATORE_APP_GELA = 157;
+    public final static int OPERATORE_SIRENE_CATANIA = 157;
+    public final static int OPERATORE_APP_CATANIA = 157;
 
 
     // TODO add others

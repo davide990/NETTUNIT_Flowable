@@ -51,7 +51,7 @@ public class comune_monitor_event_severity extends BaseHandler implements Trigge
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
         musaService.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_STANDARD);
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
-        musaService.updateEventDescription(evt, "*emergenza superata, ritorno al livello di criticità ordinaria (allerta gialla)* [PC - Catania]");
+        musaService.updateEventDescription(evt, "*emergenza superata, ritorno al livello di criticità ordinaria (allerta gialla)*");
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getMusaRabbitMQConsumerService().save(evt, taskID);

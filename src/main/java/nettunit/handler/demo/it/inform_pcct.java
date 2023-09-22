@@ -62,8 +62,8 @@ public class inform_pcct extends BaseHandler implements TriggerableActivityBehav
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
         musaService.updateEventSeverity(evt, JixelDomainInformation.SEVERITY_LEVEL_ELEVATO);
         this.getMusaRabbitMQConsumerService().save(evt, taskID);
-        this.getMUSAService().updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto]");
-        this.getMusaRabbitMQConsumerService().save(evt, taskID);
+//        this.getMUSAService().updateEventDescription(evt, "test *presa in carico dal DRPC* [PCRS] + *interpretazione dei risultati del modello* [INM] + *valutazione del potenziale impatto sulla salute della popolazione interessata* [CNR-IFT] + *comunicazione attivazione dello stato di ALLARME, l&#39;attivazione del COC e del modello di intervento* [Prefetto]");
+//        this.getMusaRabbitMQConsumerService().save(evt, taskID);
 
         this.getNETTUNITService().currentTask = Optional.of(this.getClass().getName());
         this.getNETTUNITService().FailedTaskName = Optional.of(taskName);
